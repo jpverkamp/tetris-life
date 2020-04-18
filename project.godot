@@ -15,17 +15,20 @@ _global_script_class_icons={
 
 [application]
 
-config/name="Life Tiles"
-run/main_scene="res://Main.tscn"
-config/icon="res://icon.png"
+config/name="Tetris Sand"
+run/main_scene="res://scenes/Main.tscn"
+config/icon="res://assets/icon.png"
 
 [display]
 
-window/size/width=800
+window/size/width=160
+window/size/height=320
+window/stretch/mode="viewport"
+window/stretch/aspect="keep"
 
 [rendering]
 
 quality/driver/driver_name="GLES2"
 vram_compression/import_etc=true
 vram_compression/import_etc2=false
-environment/default_environment="res://default_env.tres"
+environment/default_environment="res://assets/default_env.tres"

@@ -1,9 +1,10 @@
 [gd_scene load_steps=2 format=2]
 
-[ext_resource path="res://PixelEngine.gd" type="Script" id=1]
+[ext_resource path="res://scripts/PixelEngine.gd" type="Script" id=1]
 
 [node name="PixelEngine" type="Node2D"]
 script = ExtResource( 1 )
+IMAGE_SIZE = Vector2( 16, 16 )
 
 [node name="PixelEngine" type="Sprite" parent="."]
 centered = false

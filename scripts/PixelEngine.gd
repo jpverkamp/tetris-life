@@ -9,7 +9,8 @@ var rng = RandomNumberGenerator.new()
 var my_image
 var my_texture
 var mouse_down = false
-onready var sprite = $PixelEngine
+
+onready var sprite = get_node("./PixelEngine")
 
 func _ready():
 	# Create the image we will actually draw to
