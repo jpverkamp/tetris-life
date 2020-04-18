@@ -1,14 +1,20 @@
 extends Node2D
 
-onready var Block = preload("res://scenes/Block.tscn")
-onready var blocks = $Blocks
+onready var Tetromino = preload("res://scenes/Tetromino.tscn")
+onready var tetrominos = $Tetrominos
 
-func _on_Block_on_lock():
-	var new_block = Block.instance()
-	new_block.name = "Block" + str(blocks.get_child_count() + 1)
-	new_block.position = Vector2(80, 20)
-	new_block.connect("on_lock", self, "_on_Block_on_lock")
-	blocks.add_child(new_block)
-
-	print('Spawned ' + new_block.name)
+func spawn():
+	print('Spawning a new block')
 	
+	var child = Tetromino.instance()
+	child.init_random()
+	child.name = "Tetromino" + str(tetrominos.get_child_count() + 1)
+	child.position = Vector2(80, 20)
+	child.connect("on_lock", self, "_on_lock")
+	tetrominos.add_child(child)
+	
+func _ready():
+	spawn()
+
+func _on_lock():
+	spawn()
