@@ -22,6 +22,7 @@ func hide_all():
 	$Foreground/Buttons.visible = false
 	$Foreground/Options.visible = false
 	$Foreground/Help.visible = false
+	$Foreground/MoreHelp.visible = false
 	
 	$Background/Scores/Count.visible = false
 	$Background/Scores/Height.visible = false
@@ -63,7 +64,11 @@ func _on_done():
 func _on_Help_pressed():
 	hide_all()
 	$Foreground/Help.visible = true
-	
+
+func _on_more_help():
+	hide_all()
+	$Foreground/MoreHelp.visible = true
+
 # QUIT
 
 func _on_quit():
@@ -72,5 +77,7 @@ func _on_quit():
 
 
 	
+
+
 
 

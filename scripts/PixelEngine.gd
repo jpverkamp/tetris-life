@@ -30,19 +30,25 @@ enum CELL {
 	plant,
 	lava,
 	fire,
-	acid
+	acid,
+	wax,
+	hotwax,
+	ice
 }
 
 const COLORS = {
-	CELL.empty: Color(0, 0, 0, 0),
-	CELL.wall:  Color(0.5,  0.5,  0.5),
-	CELL.sand:  Color(0.76, 0.70, 0.50),
-	CELL.smoke: Color(0.95, 0.95, 0.95),
-	CELL.water: Color(0,    0,    1.0),
-	CELL.plant: Color(0,    0.75, 0),
-	CELL.lava:  Color(0.75, 0.33, 0.33),
-	CELL.fire:  Color(1.0,  0,    0),
-	CELL.acid:  Color(1.0,  0,    1.0)
+	CELL.empty:  Color(0, 0, 0, 0),
+	CELL.wall:   Color(0.5,  0.5,  0.5),
+	CELL.sand:   Color(0.76, 0.70, 0.50),
+	CELL.smoke:  Color(0.95, 0.95, 0.95),
+	CELL.water:  Color(0,    0,    1.0),
+	CELL.plant:  Color(0,    0.75, 0),
+	CELL.lava:   Color(0.75, 0.33, 0.33),
+	CELL.fire:   Color(1.0,  0,    0),
+	CELL.acid:   Color(1.0,  0,    1.0),
+	CELL.wax:    Color(0.94, 0.90, 0.83),
+	CELL.hotwax: Color(0.94, 0.90, 0.83),
+	CELL.ice:    Color(0.65, 0.95, 0.95),
 }
 
 # Particles a frame can start with and percent to fill with that
@@ -70,8 +76,8 @@ const INITABLE = {
 		CELL.lava, CELL.lava, CELL.lava
 	]
 }
-const EXPERIMENTAL = [CELL.acid]
-const SPAWN_FULL_BLOCKS = [CELL.wall]
+const EXPERIMENTAL = [CELL.acid, CELL.hotwax, CELL.wax, CELL.ice]
+const SPAWN_FULL_BLOCKS = [CELL.wall, CELL.hotwax, CELL.ice]
 const INIT_CHANCE = 0.50
 
 # Number of particles to randomly try to update each frame
@@ -79,7 +85,7 @@ onready var UPDATES_PER_FRAME = min(WIDTH * HEIGHT, 16 * 16 * 100)
 
 # Types that move up/down/left and right respective
 const RISING = [CELL.smoke, CELL.fire]
-const FALLING = [CELL.sand, CELL.water, CELL.lava, CELL.fire, CELL.acid]
+const FALLING = [CELL.sand, CELL.water, CELL.lava, CELL.fire, CELL.acid, CELL.hotwax]
 const SPREADING = [CELL.smoke, CELL.fire, CELL.water, CELL.lava, CELL.acid]
 
 # Types that randomly disappear
@@ -109,6 +115,8 @@ const PLANT_GROWTH_PER_EMPTY = {
 	'Hard': 0.001
 }
 const ACID_STRENGTH = 0.25
+const WAX_TRANSITION_CHANCE = 0.1
+const ICE_MELT_CHANCE = 0.75
 
 onready var sprite = $PixelEngine
 
@@ -286,6 +294,22 @@ func _process(_delta):
 							if randf() < ACID_STRENGTH:
 								data[xi][yi] = CELL.empty
 								updated[xi][yi] = true
+		
+		elif current == CELL.wax:
+			if randf() < count_neighbors_of(x, y, CELL.fire) * WAX_TRANSITION_CHANCE:
+				data[x][y] = CELL.hotwax
+				updated[x][y] = true
+			
+		elif current == CELL.hotwax:
+			if randf() < WAX_TRANSITION_CHANCE:
+				data[x][y] = CELL.wax
+				updated[x][y] = true
+			
+		elif current == CELL.ice:
+			if randf() < count_neighbors_of(x, y, CELL.fire) * ICE_MELT_CHANCE:
+				data[x][y] = CELL.water
+				updated[x][y] = true
+			
 		
 		# Potentially spawn
 		current = data[x][y]

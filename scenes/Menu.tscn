@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://scripts/Menu.gd" type="Script" id=1]
 [ext_resource path="res://scenes/Main.tscn" type="PackedScene" id=2]
 [ext_resource path="res://scenes/PixelEngine.tscn" type="PackedScene" id=3]
 [ext_resource path="res://scripts/Help.gd" type="Script" id=4]
+[ext_resource path="res://scripts/MoreHelp.gd" type="Script" id=5]
 
 [node name="Menu" type="Node2D"]
 script = ExtResource( 1 )
@@ -35,6 +36,7 @@ __meta__ = {
 }
 
 [node name="Buttons" type="CenterContainer" parent="Foreground"]
+visible = false
 margin_right = 160.0
 margin_bottom = 320.0
 grow_horizontal = 2
@@ -77,10 +79,10 @@ margin_bottom = 92.0
 text = "Quit"
 
 [node name="Options" type="CenterContainer" parent="Foreground"]
-visible = false
 anchor_left = -0.00408649
 anchor_right = -0.00408649
-margin_right = 160.0
+margin_left = 0.653839
+margin_right = 160.654
 margin_bottom = 320.0
 __meta__ = {
 "_edit_use_anchors_": false
@@ -240,10 +242,10 @@ __meta__ = {
 }
 
 [node name="Label" type="Label" parent="Foreground/Help"]
-margin_left = 6.0
-margin_top = 175.0
-margin_right = 155.0
-margin_bottom = 263.0
+margin_left = 6.65576
+margin_top = 160.573
+margin_right = 155.656
+margin_bottom = 248.573
 text = "To win: Let your plants 
 grow to the top of the 
 screen.
@@ -254,6 +256,125 @@ __meta__ = {
 }
 
 [node name="Done" type="Button" parent="Foreground/Help"]
+margin_left = 53.1238
+margin_top = 280.978
+margin_right = 99.1238
+margin_bottom = 300.978
+text = "Done"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="More" type="Button" parent="Foreground/Help"]
+margin_left = 37.4102
+margin_top = 254.134
+margin_right = 116.41
+margin_bottom = 274.134
+text = "More Help"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="MoreHelp" type="Control" parent="Foreground"]
+visible = false
+script = ExtResource( 5 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Acid" type="ReferenceRect" parent="Foreground/MoreHelp"]
+margin_left = 0.826508
+margin_top = 60.493
+margin_right = 160.827
+margin_bottom = 80.493
+
+[node name="Engine" parent="Foreground/MoreHelp/Acid" instance=ExtResource( 3 )]
+position = Vector2( 4.03949, 1.53077 )
+WIDTH = 4
+HEIGHT = 4
+SCALE = 4
+START_EMPTY = true
+ALLOW_ROTATION = false
+
+[node name="Label" type="Label" parent="Foreground/MoreHelp/Acid"]
+margin_left = 22.716
+margin_top = 1.76135
+margin_right = 139.716
+margin_bottom = 15.7614
+text = "Acid: MY FACE!"
+__meta__ = {
+"_edit_lock_": true,
+"_edit_use_anchors_": false
+}
+
+[node name="Wax" type="ReferenceRect" parent="Foreground/MoreHelp"]
+margin_left = -0.4841
+margin_top = 84.064
+margin_right = 159.516
+margin_bottom = 104.064
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Engine" parent="Foreground/MoreHelp/Wax" instance=ExtResource( 3 )]
+position = Vector2( 4.03949, 1.53077 )
+WIDTH = 4
+HEIGHT = 4
+SCALE = 4
+START_EMPTY = true
+ALLOW_ROTATION = false
+
+[node name="Label" type="Label" parent="Foreground/MoreHelp/Wax"]
+margin_left = 22.716
+margin_top = 1.76135
+margin_right = 139.716
+margin_bottom = 15.7614
+text = "Wax: Melts"
+__meta__ = {
+"_edit_lock_": true,
+"_edit_use_anchors_": false
+}
+
+[node name="Ice" type="ReferenceRect" parent="Foreground/MoreHelp"]
+margin_left = 0.170654
+margin_top = 108.985
+margin_right = 160.171
+margin_bottom = 128.985
+
+[node name="Engine" parent="Foreground/MoreHelp/Ice" instance=ExtResource( 3 )]
+position = Vector2( 4.03949, 1.53077 )
+WIDTH = 4
+HEIGHT = 4
+SCALE = 4
+START_EMPTY = true
+ALLOW_ROTATION = false
+
+[node name="Label" type="Label" parent="Foreground/MoreHelp/Ice"]
+margin_left = 22.716
+margin_top = 1.76135
+margin_right = 139.716
+margin_bottom = 15.7614
+text = "Ice: Also melts. Duh."
+__meta__ = {
+"_edit_lock_": true,
+"_edit_use_anchors_": false
+}
+
+[node name="Label" type="Label" parent="Foreground/MoreHelp"]
+margin_left = 6.0
+margin_top = 175.0
+margin_right = 155.0
+margin_bottom = 263.0
+text = "Turn on Experimental
+mode in Options
+
+What's the worst that 
+could happen?"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Done" type="Button" parent="Foreground/MoreHelp"]
 margin_left = 53.1238
 margin_top = 277.704
 margin_right = 99.1238
@@ -271,3 +392,5 @@ __meta__ = {
 [connection signal="toggled" from="Foreground/Options/Stacking/Experimental" to="." method="_on_Experimental_toggled"]
 [connection signal="pressed" from="Foreground/Options/Stacking/Done" to="." method="_on_done"]
 [connection signal="pressed" from="Foreground/Help/Done" to="." method="_on_done"]
+[connection signal="pressed" from="Foreground/Help/More" to="." method="_on_more_help"]
+[connection signal="pressed" from="Foreground/MoreHelp/Done" to="." method="_on_done"]
