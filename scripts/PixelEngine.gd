@@ -32,7 +32,7 @@ enum CELL {
 
 const COLORS = {
 	CELL.empty: Color(0,    0,    0),
-	CELL.wall:  Color(1.0,  1.0,  1.0),
+	CELL.wall:  Color(0.25, 0.25, 0.25),
 	CELL.sand:  Color(0.76, 0.70, 0.50),
 	CELL.smoke: Color(0.95, 0.95, 0.95),
 	CELL.water: Color(0,    0,    1.0),
@@ -68,6 +68,14 @@ const SPAWN_CHANCE_PER_EMPTY = 0.05
 const SPAWNING = {
 	CELL.lava: CELL.fire
 }
+
+# Types that have slight color variations
+const COLOR_VARIATION = 0.1
+const VARIABLE_COLORS = [
+	CELL.wall,
+	CELL.sand,
+	CELL.plant
+]
 
 # Other constants
 const BURN_CHANCE_PER_FIRE = 0.1
@@ -274,7 +282,16 @@ func _process(_delta):
 	for x in range(WIDTH):
 		for y in range(HEIGHT):
 			if updated[x][y] or force_update:
-				my_image.set_pixel(x, y, COLORS[data[x][y]])
+				var color = COLORS[data[x][y]]
+				if data[x][y] in VARIABLE_COLORS:
+					my_image.set_pixel(x, y, Color(
+						color.r + COLOR_VARIATION * (randf() - 0.5),
+						color.g + COLOR_VARIATION * (randf() - 0.5),
+						color.b + COLOR_VARIATION * (randf() - 0.5)
+					))
+				else:
+					my_image.set_pixel(x, y, color)
+					
 	my_image.unlock()
 	
 	my_texture.set_data(my_image)
