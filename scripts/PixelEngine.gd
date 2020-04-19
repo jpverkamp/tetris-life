@@ -9,6 +9,8 @@ export var ALLOW_ROTATION = true
 
 const IMAGE_FORMAT = Image.FORMAT_RGBA8
 
+onready var global_options = get_node("/root/Options")
+
 var my_image
 var my_texture
 var mouse_down = false
@@ -31,8 +33,8 @@ enum CELL {
 }
 
 const COLORS = {
-	CELL.empty: Color(0,    0,    0),
-	CELL.wall:  Color(0.25, 0.25, 0.25),
+	CELL.empty: Color(0, 0, 0, 0),
+	CELL.wall:  Color(0.5,  0.5,  0.5),
 	CELL.sand:  Color(0.76, 0.70, 0.50),
 	CELL.smoke: Color(0.95, 0.95, 0.95),
 	CELL.water: Color(0,    0,    1.0),
@@ -42,14 +44,32 @@ const COLORS = {
 }
 
 # Particles a frame can start with and percent to fill with that
-const INITABLE = [
-	CELL.sand, CELL.sand, CELL.sand, CELL.sand,
-	CELL.water, CELL.water, CELL.water, CELL.water,
-	CELL.empty, CELL.empty,
-	CELL.smoke,
-	CELL.lava
-]
-const INIT_CHANCE = 0.25
+var INITABLE = {
+	'Easy': [
+		CELL.wall, CELL.wall,
+		CELL.sand, CELL.sand, CELL.sand, CELL.sand,
+		CELL.water, CELL.water, CELL.water, CELL.water,
+		CELL.empty, CELL.empty,
+	],
+	'Medium': [
+		CELL.wall, CELL.wall,
+		CELL.sand, CELL.sand,
+		CELL.water, CELL.water,
+		CELL.empty,
+		CELL.smoke,
+		CELL.lava
+	],
+	'Hard': [
+		CELL.wall, CELL.wall,
+		CELL.sand, CELL.sand,
+		CELL.water, 
+		CELL.empty, CELL.empty,
+		CELL.smoke, CELL.smoke,
+		CELL.lava, CELL.lava, CELL.lava
+	]
+}
+const SPAWN_FULL_BLOCKS = [CELL.wall]
+const INIT_CHANCE = 0.50
 
 # Number of particles to randomly try to update each frame
 onready var UPDATES_PER_FRAME = min(WIDTH * HEIGHT, 16 * 16 * 100)
@@ -79,6 +99,12 @@ const VARIABLE_COLORS = [
 
 # Other constants
 const BURN_CHANCE_PER_FIRE = 0.1
+const PLANT_GROWTH_LIMITER = 2
+const PLANT_GROWTH_PER_EMPTY = {
+	'Easy': 0.01,
+	'Medium': 0.005,
+	'Hard': 0.001
+}
 
 onready var sprite = $PixelEngine
 
@@ -88,7 +114,9 @@ var force_update = false
 
 func _ready():
 	# Choose a random type to spawn
-	var random_type = INITABLE[randi() % INITABLE.size()]
+	var init = INITABLE[global_options.difficulty]
+	print(init)
+	var random_type = init[randi() % init.size()]
 	
 	# Create an empty matrix of data cells and update flags
 	for x in range(WIDTH):
@@ -96,7 +124,7 @@ func _ready():
 		updated.append([])
 		for _y in range(HEIGHT):
 			# TODO: various spawns
-			if not START_EMPTY and randf() < INIT_CHANCE:
+			if not START_EMPTY and (random_type in SPAWN_FULL_BLOCKS or randf() < INIT_CHANCE):
 				data[x].append(random_type)
 			else:
 				data[x].append(CELL.empty)
@@ -165,14 +193,38 @@ func _process(_delta):
 		
 		# Try to react with neighboring particles
 		if current == CELL.plant:
-			# Fire/lava ignite plants
 			var hot_neighbors = count_neighbors_of(x, y, CELL.fire) + count_neighbors_of(x, y, CELL.lava)
+			var empty_neighbors = count_neighbors_of(x, y, CELL.empty)
+			var plant_neighbors = count_neighbors_of(x, y, CELL.plant)
+			
+			# Fire/lava ignite plants
 			if randf() < hot_neighbors * BURN_CHANCE_PER_FIRE:
 				data[x][y] = CELL.fire
 				updated[x][y] = true
-			
+				
+			# Plants try to grow
+			elif empty_neighbors > 0 and plant_neighbors <= PLANT_GROWTH_LIMITER:
+				for xi in range(x - 1, x + 2):
+					for yi in range(y - 1, y + 2):
+						if not in_range(xi, yi) or (xi == x and yi == y):
+							continue
+							
+						if data[xi][yi] != CELL.empty:
+							continue
+							
+						if randf() < PLANT_GROWTH_PER_EMPTY[global_options.difficulty]:
+							data[xi][yi] = CELL.plant
+							updated[xi][yi] = true
+							
+							plant_neighbors += 1
+							if plant_neighbors > PLANT_GROWTH_LIMITER:
+								break
+					
+					if plant_neighbors > PLANT_GROWTH_LIMITER:
+								break
+
 			# Plants need air to live (also can't make a game unloseable by bury in sand)
-			if count_neighbors_of(x, y, CELL.empty) == 0:
+			elif empty_neighbors == 0:
 				data[x][y] = CELL.empty
 				updated[x][y] = true
 
@@ -189,20 +241,20 @@ func _process(_delta):
 				updated[x][y] = true
 
 		elif current == CELL.water:
-			var plants = count_neighbors_of(x, y, CELL.plant)
+			var plant_neighbors = count_neighbors_of(x, y, CELL.plant)
 			
 			# Water is put out by fire
 			if count_neighbors_of(x, y, CELL.fire):
 				data[x][y] = CELL.smoke
 				updated[x][y] = true
 			# Plants grow if given just enough water
-			elif plants > 0 and plants < 3:
-				data[x][y] = CELL.plant
-				updated[x][y] = true
-			# Plants don't like to grow when they're too near to each other
-			elif plants >= 3:
-				data[x][y] = CELL.empty
-				updated[x][y] = true
+			elif plant_neighbors > 0:
+				if plant_neighbors >= PLANT_GROWTH_LIMITER:
+					data[x][y] = CELL.empty
+					updated[x][y] = true
+				else:
+					data[x][y] = CELL.plant
+					updated[x][y] = true
 			
 		# Potentially spawn
 		current = data[x][y]

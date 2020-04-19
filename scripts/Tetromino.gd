@@ -108,19 +108,28 @@ func _physics_process(delta):
 		return
 	
 	# Keyboard controls
-	for body in bodies:
-		if Input.is_action_pressed("ui_right"):
-			body.apply_central_impulse(IMPULSE)
-		if Input.is_action_pressed("ui_left"):
-			body.apply_central_impulse(-IMPULSE)
-		if Input.is_action_pressed("ui_up"):
-			body.apply_central_impulse(-0.1 * GRAVITY)
-		if Input.is_action_pressed("ui_down"):
-			body.apply_central_impulse(GRAVITY)
-		if Input.is_action_pressed("ui_rotate_left"):
-			body.apply_torque_impulse(-TORQUE)
-		if Input.is_action_pressed("ui_rotate_right"):
-			body.apply_torque_impulse(TORQUE)
+	if get_parent().get_parent().demo:
+		if randf() < 0.1:
+			var impulse = IMPULSE * (randf() - 0.5)
+			var torque = TORQUE * (randf() - 0.5)
+			
+			for body in bodies:
+				body.apply_central_impulse(impulse)
+				body.apply_torque_impulse(torque)
+	else:
+		for body in bodies:
+			if Input.is_action_pressed("ui_right"):
+				body.apply_central_impulse(IMPULSE)
+			if Input.is_action_pressed("ui_left"):
+				body.apply_central_impulse(-IMPULSE)
+			if Input.is_action_pressed("ui_up"):
+				body.apply_central_impulse(-0.1 * GRAVITY)
+			if Input.is_action_pressed("ui_down"):
+				body.apply_central_impulse(GRAVITY)
+			if Input.is_action_pressed("ui_rotate_left"):
+				body.apply_torque_impulse(-TORQUE)
+			if Input.is_action_pressed("ui_rotate_right"):
+				body.apply_torque_impulse(TORQUE)
 		
 	var settled = true
 	for body in bodies:

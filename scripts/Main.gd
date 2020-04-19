@@ -1,7 +1,29 @@
 extends Node2D
 
-const MAX_BASE = 4
+export var demo = false
 
+const MAX_BASE = 4
+const TARGET = {
+	'Easy': 50,
+	'Medium': 25,
+	'Hard': 0
+}
+
+const MESSAGES = {
+	'default': "Welcome to\nTETRIS LIFE!",
+	'win': {
+		'Easy': "IT'S ALIVE!\nYou WIN!\nMaybe try Medium?",
+		'Medium': "IT'S ALIVE!\nTry Hard next time.",
+		'Hard': "YOU WON ON HARD!\nYOU ARE AWSOME!"
+	},
+	'lose': {
+		'Easy': "All the plants died!\nYou lost.\n:(",
+		'Medium': "All the plants died!\nYou lost.\n:(",
+		'Hard': "All the plants died!\nAre you sure you're\nready for Hard?"
+	}
+}
+
+onready var global_options = get_node("/root/Options")
 onready var Tetromino = preload("res://scenes/Tetromino.tscn")
 onready var tetrominos = $Tetrominos
 onready var engine = $PixelEngine
@@ -12,7 +34,7 @@ func spawn():
 	var child = Tetromino.instance()
 	child.init_random()
 	child.name = "Tetromino" + str(tetrominos.get_child_count() + 1)
-	child.position = Vector2(80, 20)
+	child.position = Vector2(32 + randi() % (160 - 64), 20)
 	child.connect("on_lock", self, "spawn")
 	child.connect("on_reset", self, "reset_blocks")
 	tetrominos.add_child(child)
@@ -31,22 +53,35 @@ func reset_sand():
 	engine.force_update = true
 	
 func reset_blocks():
+	var target_line = $TargetLine	
+	target_line.points[0].y = TARGET[global_options.difficulty]
+	target_line.points[1].y = TARGET[global_options.difficulty]
+	
 	for tetromino in tetrominos.get_children():
 		tetromino.queue_free()
 		tetrominos.remove_child(tetromino)
+		
 	spawn()
 	
+	# On hard mode, spawn two at once
+	if global_options.difficulty == 'Hard':
+		$HardSpawnTimer.start()
+		
 func _ready():
-	OS.window_size = Vector2(320, 640)
-
 	reset_sand()
 	reset_blocks()
-
+	
+func return_to_menu(message):
+	var menu = load("res://scenes/Menu.tscn").instance()
+	menu.set_text(message)
+	get_tree().get_root().add_child(menu)
+	queue_free()
+	
 func _physics_process(_delta):
-	OS.set_window_title("TETRIS SAND | FPS: " + str(Engine.get_frames_per_second()))
-					
-	if Input.is_action_just_pressed("ui_cancel"):
-		reset_blocks()
+	OS.set_window_title("TETRIS LIFE | FPS: " + str(Engine.get_frames_per_second()))
+	
+	if not demo and Input.is_action_just_pressed("ui_cancel"):
+		return_to_menu(MESSAGES['defualt'])
 		
 func _on_Scores_timeout():
 	var count = 0
@@ -57,6 +92,19 @@ func _on_Scores_timeout():
 			if engine.data[x][y] == engine.CELL.plant:
 				count += 1
 				highest = min(highest, y)
-	
-	score_count.text = "Plants: " + str(count)
-	score_height.text = "Tallest: " + str(engine.HEIGHT - highest)
+				
+	if count == 0:
+		if demo:
+			reset_sand()
+		else:
+			return_to_menu(MESSAGES['lose'][global_options.difficulty])
+
+	elif highest <= TARGET[global_options.difficulty]:
+		if demo:
+			reset_sand()
+		else:
+			return_to_menu(MESSAGES['win'][global_options.difficulty])
+		
+	else:
+		score_count.text = "Plants: " + str(count)
+		score_height.text = "Tallest: " + str(engine.HEIGHT - highest)
