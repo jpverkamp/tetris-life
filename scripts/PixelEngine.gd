@@ -115,7 +115,6 @@ var force_update = false
 func _ready():
 	# Choose a random type to spawn
 	var init = INITABLE[global_options.difficulty]
-	print(init)
 	var random_type = init[randi() % init.size()]
 	
 	# Create an empty matrix of data cells and update flags

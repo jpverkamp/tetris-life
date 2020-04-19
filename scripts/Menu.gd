@@ -1,5 +1,6 @@
 extends Node2D
 
+onready var global_music = get_node("/root/Music")
 onready var global_options = get_node("/root/Options")
 
 func set_text(text):
@@ -33,6 +34,7 @@ func _on_options():
 
 func _on_Music_toggled(button_pressed):
 	global_options.music = button_pressed
+	global_music.ping()
 	
 func _on_Difficulty_item_selected(id):
 	global_options.difficulty = global_options.DIFFICULTY_OPTIONS[id]

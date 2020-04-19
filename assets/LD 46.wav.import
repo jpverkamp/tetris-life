@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/LD 46.wav-f2d24ff0c5fe3cde173edf46c222f66d.sample"
+
+[deps]
+
+source_file="res://assets/LD 46.wav"
+dest_files=[ "res://.import/LD 46.wav-f2d24ff0c5fe3cde173edf46c222f66d.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop=false
+compress/mode=0

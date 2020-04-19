@@ -104,7 +104,6 @@ func _ready():
 
 func _physics_process(delta):
 	if not initialized:
-		print("NOT INITIALIZED!")
 		return
 	
 	# Keyboard controls
