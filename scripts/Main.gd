@@ -81,7 +81,7 @@ func _physics_process(_delta):
 	OS.set_window_title("TETRIS LIFE | FPS: " + str(Engine.get_frames_per_second()))
 	
 	if not demo and Input.is_action_just_pressed("ui_cancel"):
-		return_to_menu(MESSAGES['defualt'])
+		return_to_menu(MESSAGES['default'])
 		
 func _on_Scores_timeout():
 	var count = 0

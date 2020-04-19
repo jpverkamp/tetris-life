@@ -116,26 +116,37 @@ var data = []
 var updated = []
 var force_update = false
 
-func _ready():
+# Fill the engine with the given particle type
+# If with is null, fill with a random type
+func fill(type = null):
 	# Choose a random type to spawn
-	var init = INITABLE[global_options.difficulty]
-	if global_options.experimental:
-		init += EXPERIMENTAL
-		
-	var random_type = init[randi() % init.size()]
+	if type == null:
+		var init = INITABLE[global_options.difficulty]
+		if global_options.experimental:
+			init += EXPERIMENTAL
+			
+		type = init[randi() % init.size()]
 	
+	for x in range(WIDTH):
+		data.append([])
+		updated.append([])
+		for y in range(HEIGHT):
+			if type in SPAWN_FULL_BLOCKS or randf() < INIT_CHANCE:
+				data[x][y] = type
+			
+
+func _ready():
 	# Create an empty matrix of data cells and update flags
 	for x in range(WIDTH):
 		data.append([])
 		updated.append([])
+		
 		for _y in range(HEIGHT):
-			# TODO: various spawns
-			if not START_EMPTY and (random_type in SPAWN_FULL_BLOCKS or randf() < INIT_CHANCE):
-				data[x].append(random_type)
-			else:
-				data[x].append(CELL.empty)
-
+			data[x].append(CELL.empty)
 			updated[x].append(false)
+			
+	if not START_EMPTY:
+		fill()
 			
 	# Create the image we will actually draw to
 	my_image = Image.new()

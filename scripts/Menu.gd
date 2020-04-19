@@ -15,7 +15,16 @@ func _ready():
 		difficulty_menu.add_item(text)
 	difficulty_menu.select(global_options.DIFFICULTY_OPTIONS.find(global_options.difficulty))
 	
-	_on_options_done()
+	_on_done()
+	
+func hide_all():
+	$Foreground/StatusBox.visible = false
+	$Foreground/Buttons.visible = false
+	$Foreground/Options.visible = false
+	$Foreground/Help.visible = false
+	
+	$Background/Scores/Count.visible = false
+	$Background/Scores/Height.visible = false
 	
 # PLAY
 
@@ -27,11 +36,9 @@ func _on_play():
 # OPTIONS
 	
 func _on_options():
-	$Foreground/Buttons.visible = false
+	hide_all()
 	$Foreground/Options.visible = true
-	$Foreground/StatusBox.visible = false
 	
-
 func _on_Music_toggled(button_pressed):
 	global_options.music = button_pressed
 	global_music.ping()
@@ -42,11 +49,21 @@ func _on_Experimental_toggled(button_pressed):
 func _on_Difficulty_item_selected(id):
 	global_options.difficulty = global_options.DIFFICULTY_OPTIONS[id]
 	
-func _on_options_done():
-	$Foreground/Buttons.visible = true
-	$Foreground/Options.visible = false
+func _on_done():
+	hide_all()
+	
 	$Foreground/StatusBox.visible = true
+	$Foreground/Buttons.visible = true
+	
+	$Background/Scores/Count.visible = true
+	$Background/Scores/Height.visible = true
+	
+# HELP
 
+func _on_Help_pressed():
+	hide_all()
+	$Foreground/Help.visible = true
+	
 # QUIT
 
 func _on_quit():
@@ -55,6 +72,5 @@ func _on_quit():
 
 
 	
-
 
 
