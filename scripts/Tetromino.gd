@@ -151,8 +151,8 @@ func _physics_process(delta):
 				for x in range(engine.WIDTH):
 					for y in range(engine.HEIGHT):
 						var target = body.global_position - Vector2(8, 8) + Vector2(x, y).rotated(engine.rotation)
-						var tx = int(target.x)
-						var ty = int(target.y)
+						var tx = int(target.x) / parent.SCALE
+						var ty = int(target.y) / parent.SCALE
 						
 						if parent.in_range(tx, ty):
 							parent.data[tx][ty] = engine.data[x][y]

@@ -2,6 +2,8 @@ extends Node2D
 
 export var WIDTH = 16
 export var HEIGHT = 16
+export var SCALE = 1
+
 export var START_EMPTY = false
 export var ALLOW_ROTATION = true
 
@@ -100,6 +102,8 @@ func _ready():
 	# Create a texture that the image will render to and that we can use on this sprite
 	my_texture = ImageTexture.new()
 	my_texture.create_from_image(my_image)
+	my_texture.flags &= ~ImageTexture.FLAG_FILTER
+	my_texture.flags &= ~ImageTexture.FLAG_MIPMAPS
 	
 	# Render initial data
 	my_image.lock()
@@ -109,7 +113,8 @@ func _ready():
 	my_image.unlock()
 	
 	sprite.set_texture(my_texture)
-	sprite.region_rect = Rect2(0, 0, WIDTH, HEIGHT)
+	sprite.region_rect = Rect2(0, 0, SCALE * WIDTH, SCALE * HEIGHT)
+	sprite.set_scale(SCALE * sprite.get_scale())
 	
 	sprite.set_process_input(true)
 	

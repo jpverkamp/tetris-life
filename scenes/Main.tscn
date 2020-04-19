@@ -45,8 +45,9 @@ __meta__ = {
 [node name="Tetrominos" type="Node" parent="."]
 
 [node name="PixelEngine" parent="." instance=ExtResource( 1 )]
-WIDTH = 160
-HEIGHT = 320
+WIDTH = 40
+HEIGHT = 80
+SCALE = 4
 START_EMPTY = true
 ALLOW_ROTATION = false
 
