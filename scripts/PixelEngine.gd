@@ -23,7 +23,7 @@ enum CELL {
 	empty,
 	wall,
 	sand,
-	cloud,
+	smoke,
 	water,
 	plant,
 	lava,
@@ -34,7 +34,7 @@ const COLORS = {
 	CELL.empty: Color(0,    0,    0),
 	CELL.wall:  Color(1.0,  1.0,  1.0),
 	CELL.sand:  Color(0.76, 0.70, 0.50),
-	CELL.cloud: Color(0.95, 0.95, 0.95),
+	CELL.smoke: Color(0.95, 0.95, 0.95),
 	CELL.water: Color(0,    0,    1.0),
 	CELL.plant: Color(0,    0.75, 0),
 	CELL.lava:  Color(0.75, 0.33, 0.33),
@@ -46,6 +46,7 @@ const INITABLE = [
 	CELL.sand, CELL.sand, CELL.sand, CELL.sand,
 	CELL.water, CELL.water, CELL.water, CELL.water,
 	CELL.empty, CELL.empty,
+	CELL.smoke,
 	CELL.lava
 ]
 const INIT_CHANCE = 0.25
@@ -54,18 +55,17 @@ const INIT_CHANCE = 0.25
 onready var UPDATES_PER_FRAME = min(WIDTH * HEIGHT, 16 * 16 * 100)
 
 # Types that move up/down/left and right respective
-const RISING = [CELL.cloud, CELL.fire]
+const RISING = [CELL.smoke, CELL.fire]
 const FALLING = [CELL.sand, CELL.water, CELL.lava, CELL.fire]
-const SPREADING = [CELL.cloud, CELL.fire, CELL.water, CELL.lava]
+const SPREADING = [CELL.smoke, CELL.fire, CELL.water, CELL.lava]
 
 # Types that randomly disappear
 const DESPAWN_CHANCE = 0.1
-const DESPAWNING = [CELL.cloud, CELL.fire]
+const DESPAWNING = [CELL.smoke, CELL.fire]
 
 # Types that may spawn new particles
 const SPAWN_CHANCE_PER_EMPTY = 0.05
 const SPAWNING = {
-	CELL.cloud: CELL.water,
 	CELL.lava: CELL.fire
 }
 
@@ -73,7 +73,7 @@ const SPAWNING = {
 const BURN_CHANCE_PER_FIRE = 0.1
 
 onready var sprite = $PixelEngine
-onready var shape = $"../CollisionShape"
+
 var data = []
 var updated = []
 var force_update = false
@@ -113,7 +113,7 @@ func _ready():
 	my_image.unlock()
 	
 	sprite.set_texture(my_texture)
-	sprite.region_rect = Rect2(0, 0, SCALE * WIDTH, SCALE * HEIGHT)
+	sprite.region_rect = Rect2(0, 0, WIDTH, HEIGHT)
 	sprite.set_scale(SCALE * sprite.get_scale())
 	
 	sprite.set_process_input(true)
@@ -157,17 +157,25 @@ func _process(_delta):
 		
 		# Try to react with neighboring particles
 		if current == CELL.plant:
+			# Fire/lava ignite plants
 			var hot_neighbors = count_neighbors_of(x, y, CELL.fire) + count_neighbors_of(x, y, CELL.lava)
 			if randf() < hot_neighbors * BURN_CHANCE_PER_FIRE:
 				data[x][y] = CELL.fire
 				updated[x][y] = true
+			
+			# Plants need air to live (also can't make a game unloseable by bury in sand)
+			if count_neighbors_of(x, y, CELL.empty) == 0:
+				data[x][y] = CELL.empty
+				updated[x][y] = true
 
 		elif current == CELL.fire:
+			# Water puts out fire
 			if count_neighbors_of(x, y, CELL.water) > 0:
 				data[x][y] = CELL.empty
 				updated[x][y] = true
 				
 		elif current == CELL.lava:
+			# Fire and water react to form solid (floating) walls
 			if count_neighbors_of(x, y, CELL.water) > 0:
 				data[x][y] = CELL.wall
 				updated[x][y] = true
@@ -175,12 +183,15 @@ func _process(_delta):
 		elif current == CELL.water:
 			var plants = count_neighbors_of(x, y, CELL.plant)
 			
+			# Water is put out by fire
 			if count_neighbors_of(x, y, CELL.fire):
-				data[x][y] = CELL.wall
+				data[x][y] = CELL.smoke
 				updated[x][y] = true
-			elif plants == 1:
+			# Plants grow if given just enough water
+			elif plants > 0 and plants < 3:
 				data[x][y] = CELL.plant
 				updated[x][y] = true
+			# Plants don't like to grow when they're too near to each other
 			elif plants >= 3:
 				data[x][y] = CELL.empty
 				updated[x][y] = true

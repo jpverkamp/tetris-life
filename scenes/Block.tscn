@@ -1,36 +1,22 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://scenes/PixelEngine.tscn" type="PackedScene" id=2]
 
-[sub_resource type="GDScript" id=1]
-script/source = "extends Node2D
-
-const IMPULSE = Vector2(10, 0)
-const DECAY = 0.25
-const FALLING = 1
-const LOCK_TIME = 1
-
-signal on_lock
-
-onready var velocity = Vector2(0, 0)
-onready var body = $KinematicBody2D
-
-var stuck_time = 0
-"
-
-[sub_resource type="RectangleShape2D" id=2]
+[sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 8, 8 )
 
 [node name="Block" type="Node2D"]
-script = SubResource( 1 )
 
 [node name="Body" type="RigidBody2D" parent="."]
 
 [node name="PixelEngine" parent="Body" instance=ExtResource( 2 )]
 position = Vector2( -8, -8 )
+WIDTH = 4
+HEIGHT = 4
+SCALE = 4
 
 [node name="CollisionShape" type="CollisionShape2D" parent="Body"]
-shape = SubResource( 2 )
+shape = SubResource( 1 )
 __meta__ = {
 "_edit_lock_": true
 }

@@ -7,13 +7,9 @@
 script = ExtResource( 2 )
 
 [node name="Block0" parent="." instance=ExtResource( 1 )]
-script = null
 
 [node name="Block1" parent="." instance=ExtResource( 1 )]
-script = null
 
 [node name="Block2" parent="." instance=ExtResource( 1 )]
-script = null
 
 [node name="Block3" parent="." instance=ExtResource( 1 )]
-script = null

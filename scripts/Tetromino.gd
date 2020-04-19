@@ -1,6 +1,7 @@
 extends Node2D
 
 signal on_lock
+signal on_reset
 
 # Physics constants
 const IMPULSE = Vector2(25, 0)
@@ -8,6 +9,7 @@ const GRAVITY = Vector2(0, 100)
 const TORQUE = 100
 const LOCK_TIME = 0.1
 const SETTLE_SPEED = 1.0
+const RESET_THRESHOLD = 100
 
 var stuck_time = 0
 var initialized = false
@@ -135,7 +137,7 @@ func _physics_process(delta):
 	if Input.is_action_just_pressed("ui_accept"):
 		settled = true
 		stuck_time = LOCK_TIME + delta
-	
+		
 	# If we hit something, start a counter, if that goes long enough, lock the block
 	if settled:
 		stuck_time += delta
@@ -144,24 +146,29 @@ func _physics_process(delta):
 				# Stop the body from moving
 				body.set_mode(RigidBody2D.MODE_STATIC)
 				
-				# Copy data from the block to the parent
-				var engine = body.get_node("PixelEngine")
-				var parent = get_parent().get_parent().get_node("PixelEngine")
+				# If we're too high up, send a reset signal
+				if body.position.y < RESET_THRESHOLD:
+					emit_signal("on_reset")
 				
-				for x in range(engine.WIDTH):
-					for y in range(engine.HEIGHT):
-						var target = body.global_position - Vector2(8, 8) + Vector2(x, y).rotated(engine.rotation)
-						var tx = int(target.x) / parent.SCALE
-						var ty = int(target.y) / parent.SCALE
-						
-						if parent.in_range(tx, ty):
-							parent.data[tx][ty] = engine.data[x][y]
-							parent.force_update = true
+				# Copy data from the block to the parent
+				else:
+					var engine = body.get_node("PixelEngine")
+					var parent = get_parent().get_parent().get_node("PixelEngine")
+					
+					for x in range(engine.WIDTH):
+						for y in range(engine.HEIGHT):
+							var target = body.global_position - Vector2(8, 8) + Vector2(x, y).rotated(engine.rotation)
+							var tx = int(target.x) / parent.SCALE
+							var ty = int(target.y) / parent.SCALE
 							
-				# Remove the block data
-				engine.queue_free()
-				engine.get_parent().get_node("Border").set_default_color(Color(1.0, 1.0, 1.0, 0.25))
-						
+							if parent.in_range(tx, ty) and parent.data[tx][ty] == parent.CELL.empty:
+								parent.data[tx][ty] = engine.data[x][y]
+								parent.force_update = true
+							
+					# Remove the block data
+					engine.queue_free()
+					engine.get_parent().get_node("Border").set_default_color(Color(1.0, 1.0, 1.0, 0.25))
+				
 			set_physics_process(false)
 			emit_signal("on_lock")
 			
