@@ -49,3 +49,28 @@ WIDTH = 160
 HEIGHT = 320
 START_EMPTY = true
 ALLOW_ROTATION = false
+
+[node name="Scores" type="Timer" parent="."]
+wait_time = 0.25
+autostart = true
+
+[node name="Count" type="Label" parent="Scores"]
+margin_left = 4.99959
+margin_top = 4.9996
+margin_right = 59.9996
+margin_bottom = 18.9996
+text = "Plants: 0"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Height" type="Label" parent="Scores"]
+margin_left = 5.0
+margin_top = 21.0
+margin_right = 94.0
+margin_bottom = 35.0
+text = "Tallest: 0"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+[connection signal="timeout" from="Scores" to="." method="_on_Scores_timeout"]
