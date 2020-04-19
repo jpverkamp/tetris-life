@@ -6,4 +6,4 @@ func _ready():
 	$Acid/Engine.fill(CELL.acid)
 	$Wax/Engine.fill(CELL.wax)
 	$Ice/Engine.fill(CELL.ice)
-	
+	$Rainbow/Engine.fill(CELL.rainbow)

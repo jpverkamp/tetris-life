@@ -33,7 +33,8 @@ enum CELL {
 	acid,
 	wax,
 	hotwax,
-	ice
+	ice,
+	rainbow
 }
 
 const COLORS = {
@@ -49,6 +50,7 @@ const COLORS = {
 	CELL.wax:    Color(0.94, 0.90, 0.83),
 	CELL.hotwax: Color(0.94, 0.90, 0.83),
 	CELL.ice:    Color(0.65, 0.95, 0.95),
+	CELL.rainbow: Color(0, 0, 0, 0),
 }
 
 # Particles a frame can start with and percent to fill with that
@@ -76,7 +78,7 @@ const INITABLE = {
 		CELL.lava, CELL.lava, CELL.lava
 	]
 }
-const EXPERIMENTAL = [CELL.acid, CELL.hotwax, CELL.wax, CELL.ice]
+const EXPERIMENTAL = [CELL.acid, CELL.hotwax, CELL.wax, CELL.ice, CELL.rainbow]
 const SPAWN_FULL_BLOCKS = [CELL.wall, CELL.hotwax, CELL.ice]
 const INIT_CHANCE = 0.50
 
@@ -84,9 +86,9 @@ const INIT_CHANCE = 0.50
 onready var UPDATES_PER_FRAME = min(WIDTH * HEIGHT, 16 * 16 * 100)
 
 # Types that move up/down/left and right respective
-const RISING = [CELL.smoke, CELL.fire]
-const FALLING = [CELL.sand, CELL.water, CELL.lava, CELL.fire, CELL.acid, CELL.hotwax]
-const SPREADING = [CELL.smoke, CELL.fire, CELL.water, CELL.lava, CELL.acid]
+const RISING = [CELL.smoke, CELL.fire, CELL.rainbow]
+const FALLING = [CELL.sand, CELL.water, CELL.lava, CELL.fire, CELL.acid, CELL.hotwax, CELL.rainbow]
+const SPREADING = [CELL.smoke, CELL.fire, CELL.water, CELL.lava, CELL.acid, CELL.rainbow]
 
 # Types that randomly disappear
 const DESPAWN_CHANCE = 0.1
@@ -118,6 +120,15 @@ const ACID_STRENGTH = 0.25
 const WAX_TRANSITION_CHANCE = 0.1
 const ICE_MELT_CHANCE = 0.75
 
+const RAINBOW_COLORS = [
+	Color(1, 0, 0),
+	Color(0, 1, 0),
+	Color(0, 0, 1),
+	Color(1, 1, 0),
+	Color(1, 0, 1),
+	Color(0, 1, 1),
+]
+
 onready var sprite = $PixelEngine
 
 var data = []
@@ -136,12 +147,11 @@ func fill(type = null):
 		type = init[randi() % init.size()]
 	
 	for x in range(WIDTH):
-		data.append([])
-		updated.append([])
 		for y in range(HEIGHT):
 			if type in SPAWN_FULL_BLOCKS or randf() < INIT_CHANCE:
 				data[x][y] = type
-			
+				
+	force_update = true
 
 func _ready():
 	# Create an empty matrix of data cells and update flags
@@ -310,7 +320,13 @@ func _process(_delta):
 				data[x][y] = CELL.water
 				updated[x][y] = true
 			
-		
+		elif current == CELL.rainbow:
+			var xi = x + randi() % 3 - 1
+			var yi = x + randi() % 3 - 1
+			
+			data[x][y] = CELL.rainbow
+			updated[x][y] = true
+			
 		# Potentially spawn
 		current = data[x][y]
 		if current in SPAWNING:
@@ -390,7 +406,10 @@ func _process(_delta):
 		for y in range(HEIGHT):
 			if updated[x][y] or force_update:
 				var color = COLORS[data[x][y]]
-				if data[x][y] in VARIABLE_COLORS:
+				if data[x][y] == CELL.rainbow:
+					my_image.set_pixel(x, y, RAINBOW_COLORS[randi() % RAINBOW_COLORS.size()])
+					
+				elif data[x][y] in VARIABLE_COLORS:
 					my_image.set_pixel(x, y, Color(
 						color.r + COLOR_VARIATION * (randf() - 0.5),
 						color.g + COLOR_VARIATION * (randf() - 0.5),

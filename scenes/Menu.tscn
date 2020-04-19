@@ -276,7 +276,6 @@ __meta__ = {
 }
 
 [node name="MoreHelp" type="Control" parent="Foreground"]
-visible = false
 script = ExtResource( 5 )
 __meta__ = {
 "_edit_use_anchors_": false
@@ -355,6 +354,31 @@ margin_top = 1.76135
 margin_right = 139.716
 margin_bottom = 15.7614
 text = "Ice: Also melts. Duh."
+__meta__ = {
+"_edit_lock_": true,
+"_edit_use_anchors_": false
+}
+
+[node name="Rainbow" type="ReferenceRect" parent="Foreground/MoreHelp"]
+margin_left = 0.170654
+margin_top = 136.484
+margin_right = 160.171
+margin_bottom = 156.484
+
+[node name="Engine" parent="Foreground/MoreHelp/Rainbow" instance=ExtResource( 3 )]
+position = Vector2( 4.03949, 1.53077 )
+WIDTH = 4
+HEIGHT = 4
+SCALE = 4
+START_EMPTY = true
+ALLOW_ROTATION = false
+
+[node name="Label" type="Label" parent="Foreground/MoreHelp/Rainbow"]
+margin_left = 22.716
+margin_top = 1.76135
+margin_right = 139.716
+margin_bottom = 15.7614
+text = "Rainbow: Taste it"
 __meta__ = {
 "_edit_lock_": true,
 "_edit_use_anchors_": false
