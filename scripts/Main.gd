@@ -14,7 +14,18 @@ func spawn():
 	tetrominos.add_child(child)
 	
 func _ready():
+	OS.window_size = Vector2(320, 640)
 	spawn()
 
 func _on_lock():
 	spawn()
+
+func _physics_process(delta):
+	OS.set_window_title("TETRIS SAND | FPS: " + str(Engine.get_frames_per_second()))
+	
+	if Input.is_action_just_pressed("ui_cancel"):
+		for tetromino in tetrominos.get_children():
+			tetromino.queue_free()
+			tetrominos.remove_child(tetromino)
+		spawn()
+		

@@ -7,10 +7,10 @@ const IMPULSE = Vector2(25, 0)
 const GRAVITY = Vector2(0, 100)
 const TORQUE = 100
 const LOCK_TIME = 0.1
+const SETTLE_SPEED = 1.0
 
 var stuck_time = 0
 var initialized = false
-var velocity = Vector2()
 
 onready var bodies = [
 	$"Block0/Body",
@@ -94,8 +94,6 @@ func init(shape):
 					joint.node_a = joint.get_path_to(bi.get_node("Body"))
 					joint.node_b = joint.get_path_to(bj.get_node("Body"))
 				
-				print("Joined " + str(bi) + " and " + str(bj) + " at " + str(pins))
-
 	initialized = true
 
 func _ready():
@@ -126,12 +124,25 @@ func _physics_process(delta):
 	for body in bodies:
 		if not body.sleeping:
 			settled = false
+		
+	var total_velocity = 0	
+	for body in bodies:
+		total_velocity += body.get_linear_velocity().length()
+	
+	if total_velocity <= SETTLE_SPEED:
+		settled = true
+		
+	if Input.is_action_just_pressed("ui_accept"):
+		settled = true
+		stuck_time = LOCK_TIME + delta
 	
 	# If we hit something, start a counter, if that goes long enough, lock the block
 	if settled:
-		velocity = Vector2.ZERO
 		stuck_time += delta
 		if stuck_time > LOCK_TIME:
+			for body in bodies:
+				body.set_mode(RigidBody2D.MODE_STATIC)
+			
 			set_physics_process(false)
 			emit_signal("on_lock")
 			
