@@ -2,6 +2,8 @@ extends Node2D
 
 export var WIDTH = 16
 export var HEIGHT = 16
+export var START_EMPTY = false
+export var ALLOW_ROTATION = true
 
 const IMAGE_FORMAT = Image.FORMAT_RGBA8
 
@@ -22,32 +24,37 @@ enum CELL {
 	cloud,
 	water,
 	plant,
-	torch,
+	lava,
 	fire
 }
 
 const COLORS = {
 	CELL.empty: Color(0,    0,    0),
-	CELL.wall:  Color(0.5,  0.5,  0.5),
+	CELL.wall:  Color(1.0,  1.0,  1.0),
 	CELL.sand:  Color(0.76, 0.70, 0.50),
-	CELL.cloud: Color(0.8,  0.8,  0.8),
+	CELL.cloud: Color(0.95, 0.95, 0.95),
 	CELL.water: Color(0,    0,    1.0),
 	CELL.plant: Color(0,    0.75, 0),
-	CELL.torch: Color(0.75, 0.33, 0.33),
+	CELL.lava:  Color(0.75, 0.33, 0.33),
 	CELL.fire:  Color(1.0,  0,    0),
 }
 
 # Particles a frame can start with and percent to fill with that
-const INITABLE = [CELL.sand, CELL.water, CELL.fire, CELL.cloud, CELL.plant]
+const INITABLE = [
+	CELL.sand, CELL.sand, CELL.sand, CELL.sand,
+	CELL.water, CELL.water, CELL.water, CELL.water,
+	CELL.empty, CELL.empty,
+	CELL.lava
+]
 const INIT_CHANCE = 0.25
 
 # Number of particles to randomly try to update each frame
-var UPDATES_PER_FRAME = WIDTH * HEIGHT / 8
+onready var UPDATES_PER_FRAME = min(WIDTH * HEIGHT, 16 * 16 * 100)
 
 # Types that move up/down/left and right respective
-const RISING = [CELL.cloud, CELL.fire] 					# Types that try to move up
-const FALLING = [CELL.sand, CELL.water] 				# Types that try to move down
-const SPREADING = [CELL.cloud, CELL.fire, CELL.water] 	# Types that try to move side to side
+const RISING = [CELL.cloud, CELL.fire]
+const FALLING = [CELL.sand, CELL.water, CELL.lava, CELL.fire]
+const SPREADING = [CELL.cloud, CELL.fire, CELL.water, CELL.lava]
 
 # Types that randomly disappear
 const DESPAWN_CHANCE = 0.1
@@ -57,17 +64,17 @@ const DESPAWNING = [CELL.cloud, CELL.fire]
 const SPAWN_CHANCE_PER_EMPTY = 0.05
 const SPAWNING = {
 	CELL.cloud: CELL.water,
-	CELL.torch: CELL.fire
+	CELL.lava: CELL.fire
 }
 
 # Other constants
 const BURN_CHANCE_PER_FIRE = 0.1
-const GROW_CHANCE_PER_PLANT = 0.1
 
 onready var sprite = $PixelEngine
 onready var shape = $"../CollisionShape"
 var data = []
 var updated = []
+var force_update = false
 
 func _ready():
 	# Choose a random type to spawn
@@ -79,7 +86,7 @@ func _ready():
 		updated.append([])
 		for _y in range(HEIGHT):
 			# TODO: various spawns
-			if randf() < INIT_CHANCE:
+			if not START_EMPTY and randf() < INIT_CHANCE:
 				data[x].append(random_type)
 			else:
 				data[x].append(CELL.empty)
@@ -118,11 +125,11 @@ func count_neighbors_of(x, y, type):
 	var count = 0
 	
 	for xi in range(x - 1, x + 2):
-		for yi in range(-1, 2):
+		for yi in range(y - 1, y + 2):
 			if not in_range(xi, yi) or (xi == x and yi == y):
 				continue
 				
-			if data[x][y] == type:
+			if data[xi][yi] == type:
 				count += 1
 	
 	return count
@@ -140,28 +147,44 @@ func _process(_delta):
 		
 		if updated[x][y]:
 			continue
-			
+
 		var current = data[x][y]
 		
 		# Try to react with neighboring particles
 		if current == CELL.plant:
-			if randf() < count_neighbors_of(x, y, CELL.fire) * BURN_CHANCE_PER_FIRE:
+			var hot_neighbors = count_neighbors_of(x, y, CELL.fire) + count_neighbors_of(x, y, CELL.lava)
+			if randf() < hot_neighbors * BURN_CHANCE_PER_FIRE:
 				data[x][y] = CELL.fire
 				updated[x][y] = true
+
 		elif current == CELL.fire:
 			if count_neighbors_of(x, y, CELL.water) > 0:
-				data[x][y] = CELL.cloud
+				data[x][y] = CELL.empty
 				updated[x][y] = true
+				
+		elif current == CELL.lava:
+			if count_neighbors_of(x, y, CELL.water) > 0:
+				data[x][y] = CELL.wall
+				updated[x][y] = true
+
 		elif current == CELL.water:
-			if randf() < count_neighbors_of(x, y, CELL.plant) * GROW_CHANCE_PER_PLANT:
+			var plants = count_neighbors_of(x, y, CELL.plant)
+			
+			if count_neighbors_of(x, y, CELL.fire):
+				data[x][y] = CELL.wall
+				updated[x][y] = true
+			elif plants == 1:
 				data[x][y] = CELL.plant
 				updated[x][y] = true
-		
+			elif plants >= 3:
+				data[x][y] = CELL.empty
+				updated[x][y] = true
+			
 		# Potentially spawn
 		current = data[x][y]
 		if current in SPAWNING:
 			for xi in range(x - 1, x + 2):
-				for yi in range(x - 1, y + 2):
+				for yi in range(y - 1, y + 2):
 					if not in_range(xi, yi) or (xi == x and yi == y):
 						continue
 						
@@ -192,17 +215,18 @@ func _process(_delta):
 			options += [Vector2(-1, 0), Vector2(1, 0)]
 		options.shuffle()
 		
-		var src_rotation = (360 + int(sprite.get_parent().get_parent().rotation_degrees)) % 360
 		var sand_rotations = 0
-		
-		if src_rotation >= 315 or src_rotation <= 45:
-			sand_rotations = 0
-		elif src_rotation >= 45 and src_rotation <= 135:
-			sand_rotations = 1
-		elif src_rotation >= 135 and src_rotation <= 225:
-			sand_rotations = 2
-		else: 
-			sand_rotations = 3
+		if ALLOW_ROTATION:
+			var src_rotation = (360 + int(sprite.get_parent().get_parent().rotation_degrees)) % 360
+			
+			if src_rotation >= 315 or src_rotation <= 45:
+				sand_rotations = 0
+			elif src_rotation >= 45 and src_rotation <= 135:
+				sand_rotations = 1
+			elif src_rotation >= 135 and src_rotation <= 225:
+				sand_rotations = 2
+			else: 
+				sand_rotations = 3
 			
 		var ox = 0
 		var oy = 0
@@ -233,9 +257,10 @@ func _process(_delta):
 	my_image.lock()
 	for x in range(WIDTH):
 		for y in range(HEIGHT):
-			if updated[x][y]:
+			if updated[x][y] or force_update:
 				my_image.set_pixel(x, y, COLORS[data[x][y]])
 	my_image.unlock()
 	
 	my_texture.set_data(my_image)
+	force_update = false
 	

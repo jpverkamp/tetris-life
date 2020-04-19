@@ -141,8 +141,27 @@ func _physics_process(delta):
 		stuck_time += delta
 		if stuck_time > LOCK_TIME:
 			for body in bodies:
+				# Stop the body from moving
 				body.set_mode(RigidBody2D.MODE_STATIC)
-			
+				
+				# Copy data from the block to the parent
+				var engine = body.get_node("PixelEngine")
+				var parent = get_parent().get_parent().get_node("PixelEngine")
+				
+				for x in range(engine.WIDTH):
+					for y in range(engine.HEIGHT):
+						var target = body.global_position - Vector2(8, 8) + Vector2(x, y).rotated(engine.rotation)
+						var tx = int(target.x)
+						var ty = int(target.y)
+						
+						if parent.in_range(tx, ty):
+							parent.data[tx][ty] = engine.data[x][y]
+							parent.force_update = true
+							
+				# Remove the block data
+				engine.queue_free()
+				engine.get_parent().get_node("Border").set_default_color(Color(1.0, 1.0, 1.0, 0.25))
+						
 			set_physics_process(false)
 			emit_signal("on_lock")
 			

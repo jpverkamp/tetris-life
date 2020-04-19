@@ -4,8 +4,6 @@ onready var Tetromino = preload("res://scenes/Tetromino.tscn")
 onready var tetrominos = $Tetrominos
 
 func spawn():
-	print('Spawning a new block')
-	
 	var child = Tetromino.instance()
 	child.init_random()
 	child.name = "Tetromino" + str(tetrominos.get_child_count() + 1)
@@ -15,6 +13,18 @@ func spawn():
 	
 func _ready():
 	OS.window_size = Vector2(320, 640)
+	
+	var engine = $PixelEngine
+	for x in range(engine.WIDTH):
+		var wall_start = engine.HEIGHT - 1 - (randi() % 10)
+		
+		for y in range(wall_start, engine.HEIGHT - 1):
+			engine.data[x][y] = engine.CELL.wall
+			
+		engine.data[x][wall_start - 1] = engine.CELL.plant
+			
+	engine.force_update = true
+	
 	spawn()
 
 func _on_lock():

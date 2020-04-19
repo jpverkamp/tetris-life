@@ -2,7 +2,7 @@
 
 [ext_resource path="res://scenes/PixelEngine.tscn" type="PackedScene" id=2]
 
-[sub_resource type="GDScript" id=2]
+[sub_resource type="GDScript" id=3]
 script/source = "extends Node2D
 
 const IMPULSE = Vector2(10, 0)
@@ -18,11 +18,11 @@ onready var body = $KinematicBody2D
 var stuck_time = 0
 "
 
-[sub_resource type="RectangleShape2D" id=1]
+[sub_resource type="RectangleShape2D" id=2]
 extents = Vector2( 8, 8 )
 
 [node name="Block" type="Node2D"]
-script = SubResource( 2 )
+script = SubResource( 3 )
 
 [node name="Body" type="RigidBody2D" parent="."]
 
@@ -30,7 +30,17 @@ script = SubResource( 2 )
 position = Vector2( -8, -8 )
 
 [node name="CollisionShape" type="CollisionShape2D" parent="Body"]
-shape = SubResource( 1 )
+shape = SubResource( 2 )
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Border" type="Line2D" parent="Body"]
+position = Vector2( -8, -8 )
+z_index = 1
+points = PoolVector2Array( 0, 0, 16, 0, 16, 16, 0, 16, 0, 0 )
+width = 1.0
+default_color = Color( 1, 1, 1, 1 )
 __meta__ = {
 "_edit_lock_": true
 }
