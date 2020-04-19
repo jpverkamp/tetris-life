@@ -8,3 +8,4 @@ const DIFFICULTY_OPTIONS = [
 
 var music = true
 var difficulty = 'Medium'
+var experimental = false

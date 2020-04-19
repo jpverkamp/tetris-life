@@ -29,7 +29,8 @@ enum CELL {
 	water,
 	plant,
 	lava,
-	fire
+	fire,
+	acid
 }
 
 const COLORS = {
@@ -41,10 +42,11 @@ const COLORS = {
 	CELL.plant: Color(0,    0.75, 0),
 	CELL.lava:  Color(0.75, 0.33, 0.33),
 	CELL.fire:  Color(1.0,  0,    0),
+	CELL.acid:  Color(1.0,  0,    1.0)
 }
 
 # Particles a frame can start with and percent to fill with that
-var INITABLE = {
+const INITABLE = {
 	'Easy': [
 		CELL.wall, CELL.wall,
 		CELL.sand, CELL.sand, CELL.sand, CELL.sand,
@@ -68,6 +70,7 @@ var INITABLE = {
 		CELL.lava, CELL.lava, CELL.lava
 	]
 }
+const EXPERIMENTAL = [CELL.acid]
 const SPAWN_FULL_BLOCKS = [CELL.wall]
 const INIT_CHANCE = 0.50
 
@@ -76,8 +79,8 @@ onready var UPDATES_PER_FRAME = min(WIDTH * HEIGHT, 16 * 16 * 100)
 
 # Types that move up/down/left and right respective
 const RISING = [CELL.smoke, CELL.fire]
-const FALLING = [CELL.sand, CELL.water, CELL.lava, CELL.fire]
-const SPREADING = [CELL.smoke, CELL.fire, CELL.water, CELL.lava]
+const FALLING = [CELL.sand, CELL.water, CELL.lava, CELL.fire, CELL.acid]
+const SPREADING = [CELL.smoke, CELL.fire, CELL.water, CELL.lava, CELL.acid]
 
 # Types that randomly disappear
 const DESPAWN_CHANCE = 0.1
@@ -105,6 +108,7 @@ const PLANT_GROWTH_PER_EMPTY = {
 	'Medium': 0.005,
 	'Hard': 0.001
 }
+const ACID_STRENGTH = 0.25
 
 onready var sprite = $PixelEngine
 
@@ -115,6 +119,9 @@ var force_update = false
 func _ready():
 	# Choose a random type to spawn
 	var init = INITABLE[global_options.difficulty]
+	if global_options.experimental:
+		init += EXPERIMENTAL
+		
 	var random_type = init[randi() % init.size()]
 	
 	# Create an empty matrix of data cells and update flags
@@ -255,6 +262,20 @@ func _process(_delta):
 					data[x][y] = CELL.plant
 					updated[x][y] = true
 			
+		elif current == CELL.acid:
+			if count_neighbors_of(x, y, CELL.water) > 0:
+				data[x][y] = CELL.sand
+				updated[x][y] = true
+			else:
+				for xi in range(x - 1, x + 2):
+					for yi in range(y - 1, y + 2):
+						if not in_range(xi, yi) or (xi == x and yi == y):
+							continue
+						else:
+							if randf() < ACID_STRENGTH:
+								data[xi][yi] = CELL.empty
+								updated[xi][yi] = true
+		
 		# Potentially spawn
 		current = data[x][y]
 		if current in SPAWNING:
