@@ -54,8 +54,8 @@ func reset_sand():
 	
 func reset_blocks():
 	var target_line = $TargetLine	
-	target_line.points[0].y = TARGET[global_options.difficulty]
-	target_line.points[1].y = TARGET[global_options.difficulty]
+	target_line.points[0].y = TARGET[global_options.difficulty] * engine.SCALE
+	target_line.points[1].y = TARGET[global_options.difficulty] * engine.SCALE
 	
 	for tetromino in tetrominos.get_children():
 		tetromino.queue_free()

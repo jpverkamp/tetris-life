@@ -6,10 +6,10 @@
 [sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 80, 10 )
 
-[sub_resource type="RectangleShape2D" id=3]
+[sub_resource type="RectangleShape2D" id=2]
 extents = Vector2( 80, 10 )
 
-[sub_resource type="RectangleShape2D" id=2]
+[sub_resource type="RectangleShape2D" id=3]
 extents = Vector2( 10, 170 )
 
 [node name="Main" type="Node2D"]
@@ -75,7 +75,36 @@ __meta__ = {
 }
 
 [node name="ColliderShape" type="CollisionShape2D" parent="Walls/Floor/Collider"]
-shape = SubResource( 3 )
+shape = SubResource( 2 )
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Ceiling" type="StaticBody2D" parent="Walls"]
+position = Vector2( 0, -170 )
+
+[node name="Shape" type="CollisionShape2D" parent="Walls/Ceiling"]
+shape = SubResource( 1 )
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Line2D" type="Line2D" parent="Walls/Ceiling"]
+position = Vector2( -80, -10 )
+points = PoolVector2Array( 0, 0, 160, 0 )
+width = 2.0
+default_color = Color( 1, 1, 1, 0.25098 )
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="Collider" type="StaticBody2D" parent="Walls/Ceiling"]
+__meta__ = {
+"_edit_lock_": true
+}
+
+[node name="ColliderShape" type="CollisionShape2D" parent="Walls/Ceiling/Collider"]
+shape = SubResource( 2 )
 __meta__ = {
 "_edit_lock_": true
 }
@@ -84,7 +113,7 @@ __meta__ = {
 position = Vector2( -90, 5 )
 
 [node name="Shape" type="CollisionShape2D" parent="Walls/Left"]
-shape = SubResource( 2 )
+shape = SubResource( 3 )
 __meta__ = {
 "_edit_lock_": true
 }
@@ -93,7 +122,7 @@ __meta__ = {
 position = Vector2( 90, 5 )
 
 [node name="Shape" type="CollisionShape2D" parent="Walls/Right"]
-shape = SubResource( 2 )
+shape = SubResource( 3 )
 __meta__ = {
 "_edit_lock_": true
 }
