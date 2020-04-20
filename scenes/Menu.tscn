@@ -276,6 +276,7 @@ __meta__ = {
 }
 
 [node name="MoreHelp" type="Control" parent="Foreground"]
+visible = false
 script = ExtResource( 5 )
 __meta__ = {
 "_edit_use_anchors_": false
