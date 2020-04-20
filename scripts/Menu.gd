@@ -10,6 +10,11 @@ func _ready():
 	OS.window_size = Vector2(320, 640)
 	$Background.demo = true
 	
+	# No point in a quit button on web
+	# TODO: Include this on mobile if we do that
+	if OS.get_name() == 'HTML5':
+		$Foreground/Buttons/Stacking/Quit.visible = false
+	
 	var difficulty_menu = $Foreground/Options/Stacking/Difficulty
 	for text in global_options.DIFFICULTY_OPTIONS:
 		difficulty_menu.add_item(text)

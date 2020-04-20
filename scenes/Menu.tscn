@@ -364,6 +364,9 @@ margin_left = 0.170654
 margin_top = 136.484
 margin_right = 160.171
 margin_bottom = 156.484
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="Engine" parent="Foreground/MoreHelp/Rainbow" instance=ExtResource( 3 )]
 position = Vector2( 4.03949, 1.53077 )
