@@ -63,21 +63,22 @@ func _ready():
 	# TODO: Fix this
 	define_type('empty', Color(0, 0, 0), ['void'])
 	define_type('stone', Color(0.75, 0.75, 0.75), ['blocky', 'colorful'])
-	define_type('plant', Color(0, 1, 0), ['colorful'], [
-		'spawn@0.1(plant<3 to plant)',
+	define_type('plant', Color(0.13, 0.55, 0.13), ['colorful'], [
+		'spawn@1(plant<3 to plant)',
 		'neighbor@0.1(water>1 to plant)',
-		'self@0.1(hot to empty)'])
+		'self@0.1(fire to fire)'
+	])
 	# /must exist
 	
 	define_type('sand', Color(0.75, 0.70, 0.70), ['falling'])
-	define_type('water', Color(0, 0, 1), ['colorful', 'falling', 'spreading'])
+	define_type('water', Color(0, 0.41, 0.58), ['colorful', 'falling', 'spreading'])
 	
 	define_type('lava', Color(1, 0.25, 0.25), ['hot', 'falling', 'spreading'], [
 		'spawn@0.05(fire)',
 		'neighbor(water to stone)',
 		'self(water to stone)'
 	])
-	define_type('fire', Color(1, 0, 0), ['colorful', 'hot', 'rising', 'spreading'], ['decay@0.05'])
+	define_type('fire', Color(0.81, 0.13, 0.16), ['colorful', 'hot', 'rising', 'spreading'], ['decay@0.05'])
 	define_type('smoke', Color(1, 1, 1, 0.5), ['colorful', 'rising', 'spreading'], ['decay@0.05'])
 	
 	define_type('acid', Color(1, 0, 1), ['falling', 'spreading'], [

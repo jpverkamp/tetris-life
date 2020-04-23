@@ -236,16 +236,23 @@ func _process_reactions(x, y):
 				break
 
 			elif reaction_type == 'spawn':
-				var xi = x + 1 - randi() % 3
-				var yi = y + 1 - randi() % 3
-				if in_range(xi, yi) and data[xi][yi] == 'empty':
-					set_data(xi, yi, product)
+				for _i in range(9):
+					var xi = x + 1 - randi() % 3
+					var yi = y + 1 - randi() % 3
+					if in_range(xi, yi) and data[xi][yi] == 'empty':
+						set_data(xi, yi, product)
+						break
 
 			elif reaction_type == 'neighbor':
-				var xi = x + 1 - randi() % 3
-				var yi = y + 1 - randi() % 3
-				if in_range(xi, yi) and data[xi][yi] == 'empty':
-					set_data(xi, yi, product)
+				var target = reagents[randi() % reagents.size()][0]
+				
+				for _i in range(9):
+					var xi = x + 1 - randi() % 3
+					var yi = y + 1 - randi() % 3
+					
+					if in_range(xi, yi) and data[xi][yi] == target:
+						set_data(xi, yi, product)
+						break
 				
 			elif reaction_type == 'self':
 				set_data(x, y, product)
