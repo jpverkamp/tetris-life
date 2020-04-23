@@ -23,6 +23,7 @@ config/icon="res://assets/icon.png"
 
 Options="*res://scenes/Options.tscn"
 Music="*res://scenes/Music.tscn"
+Config="*res://scripts/Config.gd"
 
 [display]
 

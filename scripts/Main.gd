@@ -23,7 +23,7 @@ const MESSAGES = {
 	}
 }
 
-onready var global_options = get_node("/root/Options")
+onready var options = get_node("/root/Options")
 onready var Tetromino = preload("res://scenes/Tetromino.tscn")
 onready var tetrominos = $Tetrominos
 onready var engine = $PixelEngine
@@ -54,8 +54,8 @@ func reset_sand():
 	
 func reset_blocks():
 	var target_line = $TargetLine	
-	target_line.points[0].y = TARGET[global_options.difficulty] * engine.SCALE
-	target_line.points[1].y = TARGET[global_options.difficulty] * engine.SCALE
+	target_line.points[0].y = TARGET[options.difficulty] * engine.SCALE
+	target_line.points[1].y = TARGET[options.difficulty] * engine.SCALE
 	
 	for tetromino in tetrominos.get_children():
 		tetromino.queue_free()
@@ -64,7 +64,7 @@ func reset_blocks():
 	spawn()
 	
 	# On hard mode, spawn two at once
-	if global_options.difficulty == 'Hard':
+	if options.difficulty == 'Hard':
 		$HardSpawnTimer.start()
 		
 func _ready():
@@ -97,13 +97,13 @@ func _on_Scores_timeout():
 		if demo:
 			reset_sand()
 		else:
-			return_to_menu(MESSAGES['lose'][global_options.difficulty])
+			return_to_menu(MESSAGES['lose'][options.difficulty])
 
-	elif highest <= TARGET[global_options.difficulty]:
+	elif highest <= TARGET[options.difficulty]:
 		if demo:
 			reset_sand()
 		else:
-			return_to_menu(MESSAGES['win'][global_options.difficulty])
+			return_to_menu(MESSAGES['win'][options.difficulty])
 		
 	else:
 		score_count.text = "Plants: " + str(count)

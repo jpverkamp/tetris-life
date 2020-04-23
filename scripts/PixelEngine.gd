@@ -9,7 +9,8 @@ export var ALLOW_ROTATION = true
 
 const IMAGE_FORMAT = Image.FORMAT_RGBA8
 
-onready var global_options = get_node("/root/Options")
+onready var options = get_node("/root/Options")
+onready var config = get_node("/root/Options")
 
 var my_image
 var my_texture
@@ -140,8 +141,8 @@ var force_update = false
 func fill(type = null):
 	# Choose a random type to spawn
 	if type == null:
-		var init = INITABLE[global_options.difficulty]
-		if global_options.experimental:
+		var init = INITABLE[options.difficulty]
+		if options.experimental:
 			init += EXPERIMENTAL
 			
 		type = init[randi() % init.size()]
@@ -247,7 +248,7 @@ func _process(_delta):
 						if data[xi][yi] != CELL.empty:
 							continue
 							
-						if randf() < PLANT_GROWTH_PER_EMPTY[global_options.difficulty]:
+						if randf() < PLANT_GROWTH_PER_EMPTY[options.difficulty]:
 							data[xi][yi] = CELL.plant
 							updated[xi][yi] = true
 							

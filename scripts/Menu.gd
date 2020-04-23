@@ -1,7 +1,7 @@
 extends Node2D
 
-onready var global_music = get_node("/root/Music")
-onready var global_options = get_node("/root/Options")
+onready var music = get_node("/root/Music")
+onready var options = get_node("/root/Options")
 
 func set_text(text):
 	$Foreground/StatusBox/Status.text = text
@@ -16,9 +16,9 @@ func _ready():
 		$Foreground/Buttons/Stacking/Quit.visible = false
 	
 	var difficulty_menu = $Foreground/Options/Stacking/Difficulty
-	for text in global_options.DIFFICULTY_OPTIONS:
+	for text in options.DIFFICULTY_OPTIONS:
 		difficulty_menu.add_item(text)
-	difficulty_menu.select(global_options.DIFFICULTY_OPTIONS.find(global_options.difficulty))
+	difficulty_menu.select(options.DIFFICULTY_OPTIONS.find(options.difficulty))
 	
 	_on_done()
 	
@@ -46,14 +46,14 @@ func _on_options():
 	$Foreground/Options.visible = true
 	
 func _on_Music_toggled(button_pressed):
-	global_options.music = button_pressed
-	global_music.ping()
+	options.music = button_pressed
+	music.ping()
 	
 func _on_Experimental_toggled(button_pressed):
-	global_options.experimental = button_pressed
+	options.experimental = button_pressed
 	
 func _on_Difficulty_item_selected(id):
-	global_options.difficulty = global_options.DIFFICULTY_OPTIONS[id]
+	options.difficulty = options.DIFFICULTY_OPTIONS[id]
 	
 func _on_done():
 	hide_all()

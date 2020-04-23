@@ -1,9 +1,9 @@
 extends Node2D
 
-onready var global_options = get_node("/root/Options")
+onready var options = get_node("/root/Options")
 
 func ping():
-	if global_options.music:
+	if options.music:
 		$AudioStreamPlayer.play()
 	else:
 		$AudioStreamPlayer.stop()

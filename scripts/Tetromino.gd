@@ -26,7 +26,7 @@ onready var bodies = [
 	$"Block3/Body"
 ]
 
-onready var global_options = get_node("/root/Options")
+onready var options = get_node("/root/Options")
 
 # Define the shapes, values are the four coordinates and then a center point to rotate around
 const SHAPES = {
@@ -125,17 +125,17 @@ func _physics_process(delta):
 	else:
 		for body in bodies:
 			if Input.is_action_pressed("ui_right"):
-				body.apply_central_impulse(DIFFICULTY_SCALE[global_options.difficulty] * IMPULSE)
+				body.apply_central_impulse(DIFFICULTY_SCALE[options.difficulty] * IMPULSE)
 			if Input.is_action_pressed("ui_left"):
-				body.apply_central_impulse(DIFFICULTY_SCALE[global_options.difficulty] * -IMPULSE)
+				body.apply_central_impulse(DIFFICULTY_SCALE[options.difficulty] * -IMPULSE)
 			if Input.is_action_pressed("ui_up"):
-				body.apply_central_impulse(DIFFICULTY_SCALE[global_options.difficulty] * -0.1 * GRAVITY)
+				body.apply_central_impulse(DIFFICULTY_SCALE[options.difficulty] * -0.1 * GRAVITY)
 			if Input.is_action_pressed("ui_down"):
-				body.apply_central_impulse(DIFFICULTY_SCALE[global_options.difficulty] * GRAVITY)
+				body.apply_central_impulse(DIFFICULTY_SCALE[options.difficulty] * GRAVITY)
 			if Input.is_action_pressed("ui_rotate_left"):
-				body.apply_torque_impulse(DIFFICULTY_SCALE[global_options.difficulty] * -TORQUE)
+				body.apply_torque_impulse(DIFFICULTY_SCALE[options.difficulty] * -TORQUE)
 			if Input.is_action_pressed("ui_rotate_right"):
-				body.apply_torque_impulse(DIFFICULTY_SCALE[global_options.difficulty] * TORQUE)
+				body.apply_torque_impulse(DIFFICULTY_SCALE[options.difficulty] * TORQUE)
 		
 	var settled = true
 	for body in bodies:
