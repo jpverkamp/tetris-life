@@ -8,9 +8,11 @@ export var START_EMPTY = false
 export var ALLOW_ROTATION = true
 
 const IMAGE_FORMAT = Image.FORMAT_RGBA8
+var UPDATES_PER_FRAME = min(WIDTH * HEIGHT, 16 * 16 * 200)
 
 onready var options = get_node("/root/Options")
-onready var config = get_node("/root/Options")
+onready var config = get_node("/root/Config")
+onready var sprite = $PixelEngine
 
 var my_image
 var my_texture
@@ -22,117 +24,8 @@ var neighbors = {
 	'bottom': null
 }
 
-enum CELL {
-	empty,
-	wall,
-	sand,
-	smoke,
-	water,
-	plant,
-	lava,
-	fire,
-	acid,
-	wax,
-	hotwax,
-	ice,
-	rainbow
-}
-
-const COLORS = {
-	CELL.empty:  Color(0, 0, 0, 0),
-	CELL.wall:   Color(0.5,  0.5,  0.5),
-	CELL.sand:   Color(0.76, 0.70, 0.50),
-	CELL.smoke:  Color(0.95, 0.95, 0.95),
-	CELL.water:  Color(0,    0,    1.0),
-	CELL.plant:  Color(0,    0.75, 0),
-	CELL.lava:   Color(0.75, 0.33, 0.33),
-	CELL.fire:   Color(1.0,  0,    0),
-	CELL.acid:   Color(1.0,  0,    1.0),
-	CELL.wax:    Color(0.94, 0.90, 0.83),
-	CELL.hotwax: Color(0.94, 0.90, 0.83),
-	CELL.ice:    Color(0.65, 0.95, 0.95),
-	CELL.rainbow: Color(0, 0, 0, 0),
-}
-
-# Particles a frame can start with and percent to fill with that
-const INITABLE = {
-	'Easy': [
-		CELL.wall, CELL.wall,
-		CELL.sand, CELL.sand, CELL.sand, CELL.sand,
-		CELL.water, CELL.water, CELL.water, CELL.water,
-		CELL.empty, CELL.empty,
-	],
-	'Medium': [
-		CELL.wall, CELL.wall,
-		CELL.sand, CELL.sand,
-		CELL.water, CELL.water,
-		CELL.empty,
-		CELL.smoke,
-		CELL.lava
-	],
-	'Hard': [
-		CELL.wall, CELL.wall,
-		CELL.sand, CELL.sand,
-		CELL.water, 
-		CELL.empty, CELL.empty,
-		CELL.smoke, CELL.smoke,
-		CELL.lava, CELL.lava, CELL.lava
-	]
-}
-const EXPERIMENTAL = [CELL.acid, CELL.hotwax, CELL.wax, CELL.ice, CELL.rainbow]
-const SPAWN_FULL_BLOCKS = [CELL.wall, CELL.hotwax, CELL.ice]
-const INIT_CHANCE = 0.50
-
-# Number of particles to randomly try to update each frame
-onready var UPDATES_PER_FRAME = min(WIDTH * HEIGHT, 16 * 16 * 100)
-
-# Types that move up/down/left and right respective
-const RISING = [CELL.smoke, CELL.fire, CELL.rainbow]
-const FALLING = [CELL.sand, CELL.water, CELL.lava, CELL.fire, CELL.acid, CELL.hotwax, CELL.rainbow]
-const SPREADING = [CELL.smoke, CELL.fire, CELL.water, CELL.lava, CELL.acid, CELL.rainbow]
-
-# Types that randomly disappear
-const DESPAWN_CHANCE = 0.1
-const DESPAWNING = [CELL.smoke, CELL.fire]
-
-# Types that may spawn new particles
-const SPAWN_CHANCE_PER_EMPTY = 0.05
-const SPAWNING = {
-	CELL.lava: CELL.fire
-}
-
-# Types that have slight color variations
-const COLOR_VARIATION = 0.1
-const VARIABLE_COLORS = [
-	CELL.wall,
-	CELL.sand,
-	CELL.plant
-]
-
-# Other constants
-const BURN_CHANCE_PER_FIRE = 0.1
-const PLANT_GROWTH_LIMITER = 2
-const PLANT_GROWTH_PER_EMPTY = {
-	'Easy': 0.01,
-	'Medium': 0.005,
-	'Hard': 0.001
-}
-const ACID_STRENGTH = 0.25
-const WAX_TRANSITION_CHANCE = 0.1
-const ICE_MELT_CHANCE = 0.75
-
-const RAINBOW_COLORS = [
-	Color(1, 0, 0),
-	Color(0, 1, 0),
-	Color(0, 0, 1),
-	Color(1, 1, 0),
-	Color(1, 0, 1),
-	Color(0, 1, 1),
-]
-
-onready var sprite = $PixelEngine
-
 var data = []
+var counts = []
 var updated = []
 var force_update = false
 
@@ -141,31 +34,95 @@ var force_update = false
 func fill(type = null):
 	# Choose a random type to spawn
 	if type == null:
-		var init = INITABLE[options.difficulty]
-		if options.experimental:
-			init += EXPERIMENTAL
-			
-		type = init[randi() % init.size()]
+		var spawns = config.difficulties[options.difficulty]['spawns']
+		var spawn_list = []
+		for type in spawns:
+			for _i in range(spawns[type]):
+				spawn_list.append(type)
+				
+		type = spawn_list[randi() % spawn_list.size()]
 	
 	for x in range(WIDTH):
 		for y in range(HEIGHT):
-			if type in SPAWN_FULL_BLOCKS or randf() < INIT_CHANCE:
+			if type in config.keywords['blocky'] or randf() < config.spawn_chance:
 				data[x][y] = type
-				
+					
 	force_update = true
+	
+func color_for(type):
+	var colors = config.colors[type]
+	var color = colors[randi() % colors.size()]
+	
+	if type in config.keywords['colorful']:
+		return Color(
+			color.r + config.color_variation * (randf() - 0.5),
+			color.g + config.color_variation * (randf() - 0.5),
+			color.b + config.color_variation * (randf() - 0.5)
+		)
+	else:
+		return color
+		
+func recalculate_counts():
+	for x in range(WIDTH):
+		for y in range(HEIGHT):
+			for type in config.types:
+				counts[x][y][type] = 0
+			
+			for keyword in config.custom_keywords:
+				counts[x][y][keyword] = 0
+			
+	for x in range(WIDTH):
+		for y in range(HEIGHT):
+			for xi in range(x - 1, x + 2):
+				for yi in range(y - 1, y + 2):
+					if in_range(xi, yi) and not (xi == x and yi == y):
+						counts[xi][yi][data[x][y]] += 1
+						
+						for keyword in config.custom_keywords:
+							if data[x][y] in config.keywords[keyword]:
+								counts[xi][yi][data[x][y]] += 1
+
+func set_data(x, y, type):
+	var previous = data[x][y]
+	data[x][y] = type
+	updated[x][y] = true
+	
+	for xi in range(x - 1, x + 2):
+		for yi in range(y - 1, y + 2):
+			if in_range(xi, yi) and not (xi == x and yi == y):
+				counts[xi][yi][previous] -= 1
+				counts[xi][yi][type] += 1
+				
+				for keyword in config.custom_keywords:
+					if previous in config.keywords[keyword]:
+						counts[xi][yi][keyword] -= 1
+
+					if type in config.keywords[keyword]:
+						counts[xi][yi][keyword] += 1
+	
+func swap_data(x1, y1, x2, y2):
+	var buffer = data[x1][y1]
+	set_data(x1, y1, data[x2][y2])
+	set_data(x2, y2, buffer)
 
 func _ready():
 	# Create an empty matrix of data cells and update flags
 	for x in range(WIDTH):
 		data.append([])
 		updated.append([])
-		
-		for _y in range(HEIGHT):
-			data[x].append(CELL.empty)
+		counts.append([])
+	
+		for y in range(HEIGHT):
+			data[x].append('empty')
 			updated[x].append(false)
+			counts[x].append({})
 			
+			for type in config.types:
+				counts[x][y][type] = 0
+				
 	if not START_EMPTY:
 		fill()
+		recalculate_counts()
 			
 	# Create the image we will actually draw to
 	my_image = Image.new()
@@ -181,7 +138,7 @@ func _ready():
 	my_image.lock()
 	for x in range(WIDTH):
 		for y in range(HEIGHT):
-			my_image.set_pixel(x, y, COLORS[data[x][y]])
+			my_image.set_pixel(x, y, color_for(data[x][y]))
 	my_image.unlock()
 	
 	sprite.set_texture(my_texture)
@@ -198,24 +155,15 @@ func in_range(x, y):
 		and y < HEIGHT
 	)
 	
-func count_neighbors_of(x, y, type):
-	var count = 0
-	
-	for xi in range(x - 1, x + 2):
-		for yi in range(y - 1, y + 2):
-			if not in_range(xi, yi) or (xi == x and yi == y):
-				continue
-				
-			if data[xi][yi] == type:
-				count += 1
-	
-	return count
-	
 func _process(_delta):
 	# Reset the update map
 	for x in range(WIDTH):
 		for y in range(HEIGHT):
 			updated[x][y] = false
+			
+	# If we're in a force cycle, refresh the counts
+	if force_update:
+		recalculate_counts()
 			
 	# Update a number of pixels at random
 	for _i in range(UPDATES_PER_FRAME):
@@ -226,201 +174,134 @@ func _process(_delta):
 			continue
 
 		var current = data[x][y]
-		
-		# Try to react with neighboring particles
-		if current == CELL.plant:
-			var hot_neighbors = count_neighbors_of(x, y, CELL.fire) + count_neighbors_of(x, y, CELL.lava)
-			var empty_neighbors = count_neighbors_of(x, y, CELL.empty)
-			var plant_neighbors = count_neighbors_of(x, y, CELL.plant)
-			
-			# Fire/lava ignite plants
-			if randf() < hot_neighbors * BURN_CHANCE_PER_FIRE:
-				data[x][y] = CELL.fire
-				updated[x][y] = true
-				
-			# Plants try to grow
-			elif empty_neighbors > 0 and plant_neighbors <= PLANT_GROWTH_LIMITER:
-				for xi in range(x - 1, x + 2):
-					for yi in range(y - 1, y + 2):
-						if not in_range(xi, yi) or (xi == x and yi == y):
-							continue
-							
-						if data[xi][yi] != CELL.empty:
-							continue
-							
-						if randf() < PLANT_GROWTH_PER_EMPTY[options.difficulty]:
-							data[xi][yi] = CELL.plant
-							updated[xi][yi] = true
-							
-							plant_neighbors += 1
-							if plant_neighbors > PLANT_GROWTH_LIMITER:
-								break
-					
-					if plant_neighbors > PLANT_GROWTH_LIMITER:
-								break
+		if current == 'empty':
+			continue
 
-			# Plants need air to live (also can't make a game unloseable by bury in sand)
-			elif empty_neighbors == 0:
-				data[x][y] = CELL.empty
-				updated[x][y] = true
-
-		elif current == CELL.fire:
-			# Water puts out fire
-			if count_neighbors_of(x, y, CELL.water) > 0:
-				data[x][y] = CELL.empty
-				updated[x][y] = true
-				
-		elif current == CELL.lava:
-			# Fire and water react to form solid (floating) walls
-			if count_neighbors_of(x, y, CELL.water) > 0:
-				data[x][y] = CELL.wall
-				updated[x][y] = true
-
-		elif current == CELL.water:
-			var plant_neighbors = count_neighbors_of(x, y, CELL.plant)
-			
-			# Water is put out by fire
-			if count_neighbors_of(x, y, CELL.fire):
-				data[x][y] = CELL.smoke
-				updated[x][y] = true
-			# Plants grow if given just enough water
-			elif plant_neighbors > 0:
-				if plant_neighbors >= PLANT_GROWTH_LIMITER:
-					data[x][y] = CELL.empty
-					updated[x][y] = true
-				else:
-					data[x][y] = CELL.plant
-					updated[x][y] = true
-			
-		elif current == CELL.acid:
-			if count_neighbors_of(x, y, CELL.water) > 0:
-				data[x][y] = CELL.sand
-				updated[x][y] = true
-			else:
-				for xi in range(x - 1, x + 2):
-					for yi in range(y - 1, y + 2):
-						if not in_range(xi, yi) or (xi == x and yi == y):
-							continue
-						else:
-							if randf() < ACID_STRENGTH:
-								data[xi][yi] = CELL.empty
-								updated[xi][yi] = true
+		_process_reactions(x, y)
+		_process_moves(x, y)
 		
-		elif current == CELL.wax:
-			if randf() < count_neighbors_of(x, y, CELL.fire) * WAX_TRANSITION_CHANCE:
-				data[x][y] = CELL.hotwax
-				updated[x][y] = true
-			
-		elif current == CELL.hotwax:
-			if randf() < WAX_TRANSITION_CHANCE:
-				data[x][y] = CELL.wax
-				updated[x][y] = true
-			
-		elif current == CELL.ice:
-			if randf() < count_neighbors_of(x, y, CELL.fire) * ICE_MELT_CHANCE:
-				data[x][y] = CELL.water
-				updated[x][y] = true
-			
-		elif current == CELL.rainbow:
-			var xi = x + randi() % 3 - 1
-			var yi = x + randi() % 3 - 1
-			
-			data[x][y] = CELL.rainbow
-			updated[x][y] = true
-			
-		# Potentially spawn
-		current = data[x][y]
-		if current in SPAWNING:
-			for xi in range(x - 1, x + 2):
-				for yi in range(y - 1, y + 2):
-					if not in_range(xi, yi) or (xi == x and yi == y):
-						continue
-						
-					if data[xi][yi] != CELL.empty:
-						continue
-						
-					if randf() > SPAWN_CHANCE_PER_EMPTY:
-						continue
-					
-					data[xi][yi] = SPAWNING[current]
-					updated[xi][yi] = true
-			
-		# Potentially despawn
-		current = data[x][y]
-		if current in DESPAWNING:
-			if randf() < DESPAWN_CHANCE:
-				data[x][y] = CELL.empty
-				updated[x][y] = true
-		
-		# Try to move
-		current = data[x][y]
-		var options = []
-		if current in RISING:
-			options += [Vector2(-1, -1), Vector2(0, -1), Vector2(1, -1)]
-		if current in FALLING:
-			options += [Vector2(-1, 1), Vector2(0, 1), Vector2(1, 1)]
-		if current in SPREADING:
-			options += [Vector2(-1, 0), Vector2(1, 0)]
-		options.shuffle()
-		
-		var sand_rotations = 0
-		if ALLOW_ROTATION:
-			var src_rotation = (360 + int(sprite.get_parent().get_parent().rotation_degrees)) % 360
-			
-			if src_rotation >= 315 or src_rotation <= 45:
-				sand_rotations = 0
-			elif src_rotation >= 45 and src_rotation <= 135:
-				sand_rotations = 1
-			elif src_rotation >= 135 and src_rotation <= 225:
-				sand_rotations = 2
-			else: 
-				sand_rotations = 3
-			
-		var ox = 0
-		var oy = 0
-		var xi = x
-		var yi = y
-		var t = 0
-		
-		for option in options:
-			ox = option.x
-			oy = option.y
-			for _j in range(sand_rotations):
-				t = -ox
-				ox = oy
-				oy = t
-			xi = x + ox
-			yi = y + oy
-				
-			if in_range(xi, yi) and data[xi][yi] == CELL.empty:
-				data[x][y] = CELL.empty
-				updated[x][y] = true
-				
-				data[xi][yi] = current
-				updated[xi][yi] = true
-				
-				break
+	_process_render()
 	
-	# Render my data
+	force_update = false
+	
+# Try to react
+func _process_reactions(x, y):
+	var current = data[x][y]
+	for reaction_type in config.reactions:
+		if not current in config.reactions[reaction_type]:
+			continue
+		
+		for reaction in config.reactions[reaction_type][current]:
+			var chance = reaction[0]
+			var reagents = reaction[1]
+			var products = reaction[2]
+			
+			# If there's a chance and we don't match that, no reaction
+			if randf() > chance:
+				continue
+			
+			# If there are reagents and they're not present, no reaction
+			var reagents_match = true
+			for reagent in reagents:
+				var type = reagent[0]
+				var operator = reagent[1]
+				var quantity = reagent[2]
+				var result = (
+					   (operator == '<'  and counts[x][y][type] <  quantity)
+					or (operator == '<=' and counts[x][y][type] <= quantity)
+					or (operator == '='  and counts[x][y][type] == quantity)
+					or (operator == '!=' and counts[x][y][type] != quantity)
+					or (operator == '>=' and counts[x][y][type] >= quantity)
+					or (operator == '>'  and counts[x][y][type] >  quantity)
+				)
+				if not result:
+					reagents_match = false
+					break
+					
+			if not reagents_match:
+				continue
+				
+			# Generate a product
+			var product_chance = randf()
+			var product = 'empty'
+			for potential_product in products:
+				if product_chance < products[potential_product]:
+					product = potential_product
+				else:
+					product_chance -= products[potential_product]
+			
+			# Do the reaction thing
+			if reaction_type == 'decay':
+				set_data(x, y, product)
+				break
+
+			elif reaction_type == 'spawn':
+				var xi = x + 1 - randi() % 3
+				var yi = y + 1 - randi() % 3
+				if in_range(xi, yi) and data[xi][yi] == 'empty':
+					set_data(xi, yi, product)
+
+			elif reaction_type == 'neighbor':
+				var xi = x + 1 - randi() % 3
+				var yi = y + 1 - randi() % 3
+				if in_range(xi, yi) and data[xi][yi] == 'empty':
+					set_data(xi, yi, product)
+				
+			elif reaction_type == 'self':
+				set_data(x, y, product)
+
+# Try to move
+func _process_moves(x, y):
+	var current = data[x][y]
+	var offsets = []
+	if current in config.keywords['rising']:
+		offsets += [Vector2(-1, -1), Vector2(0, -1), Vector2(1, -1)]
+	if current in config.keywords['falling']:
+		offsets += [Vector2(-1, 1), Vector2(0, 1), Vector2(1, 1)]
+	if current in config.keywords['spreading']:
+		offsets += [Vector2(-1, 0), Vector2(1, 0)]
+	offsets.shuffle()
+	
+	var sand_rotations = 0
+	if ALLOW_ROTATION:
+		var src_rotation = (360 + int(sprite.get_parent().get_parent().rotation_degrees)) % 360
+		
+		if src_rotation >= 315 or src_rotation <= 45:
+			sand_rotations = 0
+		elif src_rotation >= 45 and src_rotation <= 135:
+			sand_rotations = 1
+		elif src_rotation >= 135 and src_rotation <= 225:
+			sand_rotations = 2
+		else: 
+			sand_rotations = 3
+		
+	var ox = 0
+	var oy = 0
+	var xi = x
+	var yi = y
+	var t = 0
+	
+	for offset in offsets:
+		ox = offset.x
+		oy = offset.y
+		for _j in range(sand_rotations):
+			t = -ox
+			ox = oy
+			oy = t
+		xi = x + ox
+		yi = y + oy
+			
+		if in_range(xi, yi) and data[xi][yi] == 'empty':
+			swap_data(x, y, xi, yi)
+			break
+
+# Update the texture for anything that chanced
+func _process_render():
 	my_image.lock()
 	for x in range(WIDTH):
 		for y in range(HEIGHT):
 			if updated[x][y] or force_update:
-				var color = COLORS[data[x][y]]
-				if data[x][y] == CELL.rainbow:
-					my_image.set_pixel(x, y, RAINBOW_COLORS[randi() % RAINBOW_COLORS.size()])
-					
-				elif data[x][y] in VARIABLE_COLORS:
-					my_image.set_pixel(x, y, Color(
-						color.r + COLOR_VARIATION * (randf() - 0.5),
-						color.g + COLOR_VARIATION * (randf() - 0.5),
-						color.b + COLOR_VARIATION * (randf() - 0.5)
-					))
-				else:
-					my_image.set_pixel(x, y, color)
-					
+				my_image.set_pixel(x, y, color_for(data[x][y]))	
 	my_image.unlock()
-	
 	my_texture.set_data(my_image)
-	force_update = false
 	

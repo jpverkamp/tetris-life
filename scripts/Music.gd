@@ -9,7 +9,8 @@ func ping():
 		$AudioStreamPlayer.stop()
 
 func _ready():
-	ping()
+	if options.music:
+		ping()
 
 func _on_AudioStreamPlayer_finished():
 	ping()

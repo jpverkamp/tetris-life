@@ -4,22 +4,22 @@ export var demo = false
 
 const MAX_BASE = 4
 const TARGET = {
-	'Easy': 50,
-	'Medium': 25,
-	'Hard': 0
+	'easy': 50,
+	'medium': 25,
+	'hard': 0
 }
 
 const MESSAGES = {
 	'default': "Welcome to\nTETRIS LIFE!",
 	'win': {
-		'Easy': "IT'S ALIVE!\nYou WIN!\nMaybe try Medium?",
-		'Medium': "IT'S ALIVE!\nTry Hard next time.",
-		'Hard': "YOU WON ON HARD!\nYOU ARE AWSOME!"
+		'easy': "IT'S ALIVE!\nYou WIN!\nMaybe try Medium?",
+		'medium': "IT'S ALIVE!\nTry Hard next time.",
+		'hard': "YOU WON ON HARD!\nYOU ARE AWSOME!"
 	},
 	'lose': {
-		'Easy': "All the plants died!\nYou lost.\n:(",
-		'Medium': "All the plants died!\nYou lost.\n:(",
-		'Hard': "All the plants died!\nAre you sure you're\nready for Hard?"
+		'easy': "All the plants died!\nYou lost.\n:(",
+		'medium': "All the plants died!\nYou lost.\n:(",
+		'hard': "All the plants died!\nAre you sure you're\nready for Hard?"
 	}
 }
 
@@ -42,13 +42,15 @@ func spawn():
 func reset_sand():
 	for x in range(engine.WIDTH):
 		var wall_start = engine.HEIGHT - 1 - (randi() % MAX_BASE)
+		
+		# TODO: Fix this 
 		for y in range(engine.HEIGHT):
 			if y > wall_start:
-				engine.data[x][y] = engine.CELL.wall
+				engine.data[x][y] = 'stone'
 			elif y == wall_start:
-				engine.data[x][y] = engine.CELL.plant
+				engine.data[x][y] = 'plant'
 			else:
-				engine.data[x][y] = engine.CELL.empty
+				engine.data[x][y] = 'empty'
 		
 	engine.force_update = true
 	
@@ -89,7 +91,7 @@ func _on_Scores_timeout():
 	
 	for x in range(engine.WIDTH):
 		for y in range(engine.HEIGHT):
-			if engine.data[x][y] == engine.CELL.plant:
+			if engine.data[x][y] == 'plant':
 				count += 1
 				highest = min(highest, y)
 				

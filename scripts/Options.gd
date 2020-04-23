@@ -1,11 +1,11 @@
 extends Node2D
 
 const DIFFICULTY_OPTIONS = [
-	'Easy',
-	'Medium',
-	'Hard'
+	'easy',
+	'medium',
+	'hard'
 ]
 
-var music = true
-var difficulty = 'Medium'
+var music = false
+var difficulty = 'medium'
 var experimental = false

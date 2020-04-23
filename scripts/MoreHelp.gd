@@ -1,9 +1,7 @@
 extends Control
 
 func _ready():
-	var CELL = $Acid/Engine.CELL
-	
-	$Acid/Engine.fill(CELL.acid)
-	$Wax/Engine.fill(CELL.wax)
-	$Ice/Engine.fill(CELL.ice)
-	$Rainbow/Engine.fill(CELL.rainbow)
+	$Acid/Engine.fill('acid')
+	$Wax/Engine.fill('wax')
+	$Ice/Engine.fill('ice')
+	$Rainbow/Engine.fill('rainbow')

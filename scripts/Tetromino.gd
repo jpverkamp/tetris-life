@@ -11,9 +11,9 @@ const LOCK_TIME = 0.1
 const SETTLE_SPEED = 5.0
 const RESET_THRESHOLD = 50
 const DIFFICULTY_SCALE = {
-	'Easy': 0.5,
-	'Medium': 0.75,
-	'Hard': 1.0
+	'easy': 0.5,
+	'medium': 0.75,
+	'hard': 1.0
 }
 
 var stuck_time = 0
@@ -174,7 +174,7 @@ func _physics_process(delta):
 						var tx = int(target.x) / parent.SCALE
 						var ty = int(target.y) / parent.SCALE
 						
-						if parent.in_range(tx, ty) and parent.data[tx][ty] == parent.CELL.empty:
+						if parent.in_range(tx, ty) and parent.data[tx][ty] == 'empty':
 							parent.data[tx][ty] = engine.data[x][y]
 							parent.force_update = true
 						
